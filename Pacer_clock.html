@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pacer clock">
+<title>Pacer clock</title>
+<style>
+:root{--bg:#EEF2F5;--card:#FFFFFF;--ink:#10202C;--mute:#5B6B78;--line:#CBD5DD;--act:#0A58E0;--actink:#FFFFFF;--ok:#12703A;--late:#B34700;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FF9A55;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FF9A55;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+main{max-width:520px;margin:0 auto;padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px;min-height:100vh}
+h1{font-size:20px;margin:4px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+label{display:block;font-size:14px;color:var(--mute);margin-bottom:4px}
+select,input{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:10px}.row>div{flex:1}
+button{font:inherit;font-weight:700;border:0;border-radius:14px;padding:14px;background:var(--act);color:var(--actink);width:100%;font-size:20px}
+button.sec{background:var(--card);color:var(--ink);border:1px solid var(--line);font-size:16px;font-weight:600;padding:12px}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--act);outline-offset:2px}
+.plan{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:15px;margin:0;padding:0;list-style:none}
+.plan li{display:contents}.plan span:last-child{font-weight:700}
+#el{font-size:min(26vw,120px);font-weight:800;line-height:1;text-align:center;letter-spacing:-.02em;padding:6px 0}
+.sub{color:var(--mute);font-size:14px;text-align:center}
+#nm{font-size:26px;font-weight:800;line-height:1.15}
+#tt{font-size:44px;font-weight:800;line-height:1.1}
+#cd{font-size:20px;font-weight:700}
+.ok{color:var(--ok)}.late{color:var(--late)}
+#pass{font-size:30px;padding:30px 14px;margin-top:auto}
+.log{font-size:14px;color:var(--mute);margin:0;padding:0;list-style:none;display:grid;gap:3px}
+.log li{display:flex;justify-content:space-between;gap:8px}
+.btns{display:flex;gap:10px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<section id="setup">
+<h1>Pacer clock</h1>
+<div class="card" style="margin-top:12px">
+<label for="course">Course</label>
+<select id="course"></select>
+<div class="row" style="margin-top:12px">
+<div><label for="min">Target minutes</label><input id="min" type="number" inputmode="numeric" min="10" max="60"></div>
+<div><label for="sec">Seconds</label><input id="sec" type="number" inputmode="numeric" min="0" max="59"></div>
+</div>
+</div>
+<div class="card" style="margin-top:12px"><ul class="plan" id="prev"></ul></div>
+<button id="go" style="margin-top:12px">Start clock</button>
+<p class="sub">Tap Start at the gun. The clock keeps time even if the screen locks.</p>
+</section>
+
+<section id="run" hidden style="display:flex;flex-direction:column;gap:12px;flex:1">
+<div id="el">0:00</div>
+<div class="sub" id="meta"></div>
+<div class="card">
+<div class="sub" style="text-align:left" id="nl">Next waypoint</div>
+<div id="nm"></div>
+<div id="tt"></div>
+<div id="cd"></div>
+<div class="sub" style="text-align:left;margin-top:6px" id="pc"></div>
+</div>
+<div class="sub" id="then"></div>
+<ul class="log" id="log"></ul>
+<button id="pass">Passed</button>
+<div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="reset">Reset</button></div>
+</section>
+</main>
+<script>
+"use strict";
+var C={
+sot:{n:"Southampton parkrun",p:[["Start",0,0],["Left turn near park exit",.457,.0954],["Start of Cemetery Lake",.857,.1715],["Left turn after lake",1.064,.2123],["Start junction",1.302,.2599],["Cowherds Inn car park",1.622,.327],["Cross-paths after boating lake",2.163,.4416],["Left turn at top of hill",2.677,.5515],["Point-out cross-paths",3.066,.6266],["Park exit",3.769,.759],["Start of lake",4.169,.835],["Left turn after Cemetery Lake",4.376,.8758],["Start junction",4.609,.9223],["Left turn to finish",4.931,.9884],["Finish",5,1]]},
+eas:{n:"Eastleigh parkrun",p:[["Start",0,0],["Lap 1 NE corner (left)",.326,.0652],["Lap 1 SW corner (left)",.83,.166],["Lap 1 N hairpin (right)",1.217,.2434],["Lap 1 finish junction",1.581,.3162],["Lap 1 done – start line",1.709,.3418],["Lap 2 NE corner (left)",2.036,.4072],["Lap 2 SW corner (left)",2.54,.508],["Lap 2 N hairpin (right)",2.926,.5852],["Lap 2 finish junction",3.291,.6582],["Lap 2 done – start line",3.419,.6838],["Lap 3 NE corner (left)",3.745,.749],["Lap 3 SW corner (left)",4.249,.8498],["Lap 3 N hairpin (right)",4.635,.927],["Finish",5,1]]},
+wm:{n:"Water Meadows 5k",p:[["Start – St Cross corner of wall",0,0],["Garnier Road crossing",.56,.1128],["New Hall",1.25,.2511],["Wharf Hill",1.52,.3072],["Boat club right turn",1.67,.3361],["St Cats CP",2.38,.4778],["Old railway bridge",3.57,.715],["Viaduct junction",3.78,.7556],["Right turn to head North",4.33,.8656],["Finish",5,1]]}
+};
+var KEY="pacerClock1",S=load()||{c:"wm",m:30,s:0,t0:null,p:[],done:false,fin:0},wl=null;
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function f(s,fl){s=fl?Math.floor(s):Math.round(s);if(s<0)s=0;var h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return(h?h+":"+(m<10?"0":"")+m:m)+":"+(r<10?"0":"")+r}
+function ts(){return S.m*60+S.s}
+function P(){return C[S.c].p}
+function tg(i){return P()[i][2]*ts()}
+async function lock(){try{wl=await navigator.wakeLock.request("screen")}catch(e){}}
+document.addEventListener("visibilitychange",function(){if(S.t0&&!S.done&&document.visibilityState==="visible")lock()});
+
+function setup(){
+var sel=$("course");
+if(!sel.options.length){for(var k in C){var o=document.createElement("option");o.value=k;o.textContent=C[k].n;sel.appendChild(o)}}
+sel.value=S.c;$("min").value=S.m;$("sec").value=S.s;preview();
+}
+function preview(){
+var h="",p=P();
+for(var i=0;i<p.length;i++)h+="<li><span>"+p[i][0]+"</span><span>"+f(tg(i))+"</span></li>";
+$("prev").innerHTML=h;
+}
+function view(){
+var run=!!S.t0;
+$("setup").hidden=run;$("run").hidden=!run;
+if(!run){setup();return}
+var p=P(),n=S.p.length,idx=n+1,last=p.length-1;
+$("meta").textContent=C[S.c].n+" · target "+f(ts());
+if(S.done){
+$("nl").textContent="Finished";$("nm").textContent="Final time "+f(S.fin/1000,1);
+var d=S.fin/1000-ts();
+$("tt").textContent=Math.abs(Math.round(d))<2?"On target":Math.abs(Math.round(d))+" s "+(d<0?"early":"late");
+$("tt").className=Math.abs(d)<=3?"ok":"late";$("cd").textContent="";$("pc").textContent="";$("then").textContent="";
+$("pass").hidden=true;
+}else{
+$("nl").textContent="Next waypoint";$("nm").textContent=p[idx][0];$("tt").textContent=f(tg(idx));$("tt").className="";
+var km=p[idx][1]-p[idx-1][1];
+var a=n?S.p[n-1]/1000:0,rem=tg(idx)-a;
+$("pc").textContent=km>0?(rem>0?"Target pace to next waypoint "+f(rem/km)+"/km · "+Math.round(km*1000)+" m":"Past plan time for this waypoint · "+Math.round(km*1000)+" m"):"";
+$("then").textContent=idx<last?"Then: "+p[idx+1][0]+" at "+f(tg(idx+1)):"This is the finish";
+$("pass").hidden=false;$("pass").textContent=idx===last?"Finish":"Passed";
+}
+var h="";
+for(var i=n;i>=1;i--){var a=S.p[i-1]/1000,dl=a-tg(i),r=Math.round(dl);
+h+="<li><span>"+p[i][0]+" · "+f(a,1)+"</span><span class=\""+(r<=0?"ok":"late")+"\">"+(Math.abs(r)<2?"on plan":Math.abs(r)+" s "+(r<0?"ahead":"behind"))+"</span></li>"}
+$("log").innerHTML=h;
+tick();
+}
+function tick(){
+if(!S.t0)return;
+var e=S.done?S.fin/1000:(Date.now()-S.t0)/1000;
+$("el").textContent=f(e,1);
+if(!S.done){var d=tg(S.p.length+1)-e;$("cd").textContent=d>=0?"in "+f(d,1):f(-d,1)+" past target";$("cd").className=d>=0?"":"late"}
+}
+$("course").addEventListener("change",function(){S.c=this.value;save();preview()});
+function num(){S.m=Math.min(60,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}
+$("min").addEventListener("input",num);$("sec").addEventListener("input",num);
+$("go").addEventListener("click",function(){num();S.t0=Date.now();S.p=[];S.done=false;S.fin=0;save();lock();view()});
+$("pass").addEventListener("click",function(){
+if(S.done)return;
+var e=Date.now()-S.t0;S.p.push(e);
+if(S.p.length>=P().length-1){S.done=true;S.fin=e;if(wl){try{wl.release()}catch(x){}}}
+save();view();
+});
+$("undo").addEventListener("click",function(){
+if(!S.p.length)return;
+S.p.pop();if(S.done){S.done=false;S.fin=0;lock()}save();view();
+});
+$("reset").addEventListener("click",function(){
+if(confirm("Reset the clock and clear this run?")){S.t0=null;S.p=[];S.done=false;S.fin=0;save();if(wl){try{wl.release()}catch(x){}}view()}
+});
+setInterval(tick,200);
+view();
+if(S.t0&&!S.done)lock();
+</script>
+</body>
+</html>

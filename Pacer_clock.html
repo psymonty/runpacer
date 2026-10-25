@@ -46,10 +46,17 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .grid3 .v{font-size:26px;font-weight:800;line-height:1.2}
 .ok{color:var(--ok)}.late{color:var(--late)}
 #pass{font-size:30px;padding:26px 14px;margin-top:auto}
-.grid3 .dv{font-size:min(9vw,36px);font-weight:900;line-height:1.2;color:var(--mute)}
+.grid3 .dv{font-size:min(7.5vw,30px);font-weight:900;line-height:1.2;color:var(--mute)}
 .dv small{display:block;font-size:14px;font-weight:700;line-height:1.1;margin-top:2px}
 .dv.ok{color:var(--ok)}.dv.ease{color:var(--late)}.dv.fast{color:var(--red)}
 #lgl{margin-bottom:-6px}
+.c-ok{color:var(--ok)}.c-ease{color:var(--late)}.c-fast{color:var(--red)}
+.fin{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.fin li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.fin .r1{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:16px}
+.fin .r1 span:last-child{white-space:nowrap}
+.fin .r2{font-size:14px;color:var(--mute);margin-top:2px}
+.fin .r2 b{font-weight:800}
 .btns{display:flex;gap:10px;margin-top:48px}
 #run{min-height:calc(100vh - 34px);min-height:calc(100dvh - 34px)}
 [hidden]{display:none!important}
@@ -73,6 +80,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <div class="sub" id="meta"></div>
 <div id="st"></div>
 <div class="card" style="text-align:center">
+<div class="sub" id="nl" hidden style="font-size:18px;font-weight:700">Finished</div>
 <div id="nm"></div>
 <div class="lab" id="l1">in</div>
 <div id="cd"></div>
@@ -85,8 +93,9 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <div class="card"><div class="k" id="k2">Distance run</div><div class="v" id="d2">0.00 km</div></div>
 <div class="card"><div class="k" id="k3">Avg pace</div><div class="v" id="p3">–</div></div>
 </div>
-<div class="sub" id="lgl">Last 3 waypoints</div>
+<div class="sub" id="lgl">Last 3 segments vs plan pace</div>
 <div class="grid3" id="log"></div>
+<ul class="fin" id="fin" hidden></ul>
 <button id="pass">Passed</button>
 <div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="reset">Reset</button></div>
 </section>
@@ -127,7 +136,7 @@ var h="",p=P();
 for(var i=0;i<p.length;i++)h+="<li><span>"+p[i][0]+"</span><span>"+f(tg(i))+"</span></li>";
 $("prev").innerHTML=h;
 }
-var EASE=10,FAST=5; /* seconds ahead before "ease off"; seconds behind before "speed up" */
+var EASE=10,FAST=5,EASEP=6,FASTP=3; /* EASEP/FASTP: % faster / % slower than planned segment pace before orange / red (about the same as 10 s / 5 s over a typical ~170 s segment) */ /* seconds ahead before "ease off"; seconds behind before "speed up" */
 function view(){
 var run=!!S.t0;
 $("setup").hidden=run;$("run").hidden=!run;
@@ -165,13 +174,30 @@ else if(dl>FAST){st.className="fast";st.innerHTML=B("SPEED UP",ab)}
 else{st.className="ok";st.innerHTML=B("ON PLAN",ab<2?0:ab)}
 }
 }
+var gl=$("log"),fl=$("fin");
+$("nl").hidden=!S.done;
+gl.hidden=S.done;$("lgl").hidden=S.done;fl.hidden=!S.done;
+if(S.done){
 var h="";
-for(var k=0;k<3;k++){var i=n-1-k;
-if(i<1){h+='<div class="card"><div class="dv">–</div></div>';continue}
-var r=Math.round(S.p[i-1]/1000-tg(i)),c=r<-EASE?"ease":(r>FAST?"fast":"ok");
-h+='<div class="card"><div class="dv '+c+'">'+Math.abs(r)+' s<small>'+(c=="ease"?"ahead":c=="fast"?"behind":"on pace")+'</small></div></div>'}
-$("log").innerHTML=h;
+for(var i=n;i>=1;i--){var sg=seg(i),cr=Math.round(S.p[i-1]/1000-tg(i)),cc=cr<-EASE?"ease":(cr>FAST?"fast":"ok");
+h+='<li><div class="r1"><span>'+p[i][0]+" · "+f(S.p[i-1]/1000,1)+'</span><span class="c-'+cc+'">'+(Math.abs(cr)<2?"on plan":Math.abs(cr)+" s "+(cr<0?"ahead":"behind"))+'</span></div>'
++'<div class="r2">'+f(sg.ap)+" /km (plan "+f(sg.pp)+") · <b class=\"c-"+sg.c+'">'+sg.t+"</b></div></li>"}
+fl.innerHTML=h;
+}else{
+var h2="";
+for(var k=0;k<3;k++){var j=n-k;
+if(j<1){h2+='<div class="card"><div class="dv">–</div></div>';continue}
+var q=seg(j);
+h2+='<div class="card"><div class="dv c-'+q.c+'">'+q.t+'<small>'+(q.c=="ease"?"ahead":q.c=="fast"?"behind":"on pace")+'</small></div></div>'}
+gl.innerHTML=h2;
+}
 tick();
+}
+/* segment i = from waypoint i-1 to waypoint i. t = % vs planned pace (+ slower, − faster); c = colour class from the % off planned pace */
+function seg(i){
+var p=P(),a=(S.p[i-1]-(i>1?S.p[i-2]:0))/1000,pl=tg(i)-tg(i-1),km=p[i][1]-p[i-1][1],pc=(a/pl-1)*100,ap=Math.abs(pc);
+var t=(pc<0?"−":"+")+(ap<10?ap.toFixed(1):Math.round(ap))+"%";
+return{t:t,c:pc<-EASEP?"ease":(pc>FASTP?"fast":"ok"),ap:a/km,pp:pl/km}
 }
 function B(l,n){return"<span>"+l+"</span>"+(n?'<span class="n">'+n+" s</span>":"")}
 function tick(){

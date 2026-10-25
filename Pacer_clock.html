@@ -43,7 +43,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .grid3 .card{padding:10px 4px}
 .grid3 .k{font-size:13px;color:var(--mute);font-weight:600}
-.grid3 .v{font-size:26px;font-weight:800;line-height:1.2}
+.grid3 .v{font-size:26px;font-weight:800;line-height:1.2;white-space:nowrap}
 .ok{color:var(--ok)}.late{color:var(--late)}
 #pass{font-size:30px;padding:26px 14px;margin-top:auto}
 .grid3 .dv{font-size:min(7.5vw,30px);font-weight:900;line-height:1.2;color:var(--mute)}
@@ -90,8 +90,8 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 </div>
 <div class="grid3">
 <div class="card"><div class="k">Elapsed</div><div class="v" id="el">0:00</div></div>
-<div class="card"><div class="k" id="k2">Distance run</div><div class="v" id="d2">0.00 km</div></div>
-<div class="card"><div class="k" id="k3">Avg pace</div><div class="v" id="p3">–</div></div>
+<div class="card"><div class="k" id="k2">Dist /km</div><div class="v" id="d2">0.00 km</div></div>
+<div class="card"><div class="k" id="k3">Avg /km</div><div class="v" id="p3">–</div></div>
 </div>
 <div class="sub" id="lgl">Last 3 segments vs plan pace</div>
 <div class="grid3" id="log"></div>
@@ -147,9 +147,9 @@ $("meta").textContent=C[S.c].n+" · target "+f(ts());
 var st=$("st");
 /* last-waypoint stats (n = index of last waypoint passed, 0 = start) */
 var kmDone=p[n][1],tDone=n?S.p[n-1]/1000:0;
-$("k2").textContent="Distance run";
-$("d2").textContent=kmDone.toFixed(2)+" km";
-$("k3").textContent="Avg pace";
+$("k2").textContent="Dist /km";
+$("d2").textContent=kmDone.toFixed(2);
+$("k3").textContent="Avg /km";
 $("p3").textContent=(n&&kmDone>0)?f(tDone/kmDone):"–";
 if(S.done){
 $("nm").textContent="Final time "+f(S.fin/1000,1);

@@ -25,28 +25,33 @@ button.sec{background:var(--card);color:var(--ink);border:1px solid var(--line);
 button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--act);outline-offset:2px}
 .plan{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:15px;margin:0;padding:0;list-style:none}
 .plan li{display:contents}.plan span:last-child{font-weight:700}
-#el{font-size:30px;font-weight:800;line-height:1.1}
+#el{font-size:26px;font-weight:800;line-height:1.1}
 .sub{color:var(--mute);font-size:14px;text-align:center}
-.lab{font-size:20px;font-weight:700;color:var(--mute);margin-top:14px}
-#nm{font-size:min(10vw,44px);font-weight:900;line-height:1.1;margin-top:2px}
-#cd{font-size:min(22vw,92px);font-weight:900;line-height:1;letter-spacing:-.02em}
-#pc{font-size:min(22vw,92px);font-weight:900;line-height:1;letter-spacing:-.02em}
+.lab{font-size:17px;font-weight:700;color:var(--mute);margin-top:8px}
+#nm{font-size:min(8.5vw,36px);font-weight:900;line-height:1.1}
+#cd{font-size:min(18vw,76px);font-weight:900;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+#cd.sm{font-size:min(15vw,64px)}
+#pc{font-size:min(18vw,76px);font-weight:900;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+#pc.sm{font-size:min(16vw,66px)}
 #pc small{font-size:.38em;font-weight:800;color:var(--mute);letter-spacing:0}
-#dist{font-size:20px;font-weight:700;margin-top:12px}
-#st{font-size:min(8vw,34px);font-weight:900;line-height:1.15;text-align:center;border-radius:14px;padding:14px 10px;border:3px solid var(--line);background:var(--card)}
+#dist{font-size:20px;font-weight:700;margin-top:8px}
+#st{font-size:min(10vw,44px);font-weight:900;line-height:1.1;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 12px;text-align:center;border-radius:14px;padding:10px;border:3px solid var(--line);background:var(--card)}
 #st.ok{border-color:var(--ok);color:var(--ok)}
 #st.ease{border-color:var(--late);color:var(--late)}
 #st.fast{border-color:var(--red);color:var(--red)}
-#st small{display:block;font-size:.55em;font-weight:700;color:var(--mute)}
+#st .n{font-size:inherit}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .grid3 .card{padding:10px 4px}
 .grid3 .k{font-size:13px;color:var(--mute);font-weight:600}
 .grid3 .v{font-size:26px;font-weight:800;line-height:1.2}
 .ok{color:var(--ok)}.late{color:var(--late)}
-#pass{font-size:30px;padding:30px 14px;margin-top:auto}
-.log{font-size:14px;color:var(--mute);margin:0;padding:0;list-style:none;display:grid;gap:3px}
-.log li{display:flex;justify-content:space-between;gap:8px}
-.btns{display:flex;gap:10px}
+#pass{font-size:30px;padding:26px 14px;margin-top:auto}
+.grid3 .dv{font-size:min(9vw,36px);font-weight:900;line-height:1.2;color:var(--mute)}
+.dv small{display:block;font-size:14px;font-weight:700;line-height:1.1;margin-top:2px}
+.dv.ok{color:var(--ok)}.dv.ease{color:var(--late)}.dv.fast{color:var(--red)}
+#lgl{margin-bottom:-6px}
+.btns{display:flex;gap:10px;margin-top:48px}
+#run{min-height:calc(100vh - 34px);min-height:calc(100dvh - 34px)}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -67,22 +72,21 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <section id="run" hidden style="display:flex;flex-direction:column;gap:12px;flex:1">
 <div class="sub" id="meta"></div>
 <div id="st"></div>
-<div class="card">
-<div class="sub" style="text-align:left;font-size:18px;font-weight:700" id="nl">Next waypoint</div>
+<div class="card" style="text-align:center">
 <div id="nm"></div>
-<div class="lab" id="l1">Time to waypoint</div>
+<div class="lab" id="l1">in</div>
 <div id="cd"></div>
-<div class="lab" id="l2">Pace to arrive on time</div>
+<div class="lab" id="l2">Run</div>
 <div id="pc"></div>
 <div id="dist"></div>
 </div>
 <div class="grid3">
 <div class="card"><div class="k">Elapsed</div><div class="v" id="el">0:00</div></div>
-<div class="card"><div class="k" id="k2">Plan dist</div><div class="v" id="d2">0.00 km</div></div>
+<div class="card"><div class="k" id="k2">Distance run</div><div class="v" id="d2">0.00 km</div></div>
 <div class="card"><div class="k" id="k3">Avg pace</div><div class="v" id="p3">–</div></div>
 </div>
-<div class="sub" id="then" style="font-size:16px"></div>
-<ul class="log" id="log"></ul>
+<div class="sub" id="lgl">Last 3 waypoints</div>
+<div class="grid3" id="log"></div>
 <button id="pass">Passed</button>
 <div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="reset">Reset</button></div>
 </section>
@@ -134,45 +138,47 @@ $("meta").textContent=C[S.c].n+" · target "+f(ts());
 var st=$("st");
 /* last-waypoint stats (n = index of last waypoint passed, 0 = start) */
 var kmDone=p[n][1],tDone=n?S.p[n-1]/1000:0;
-$("k2").textContent=n?"Plan distance to last waypoint":"Plan distance";
+$("k2").textContent="Distance run";
 $("d2").textContent=kmDone.toFixed(2)+" km";
-$("k3").textContent="Avg pace to last waypoint";
+$("k3").textContent="Avg pace";
 $("p3").textContent=(n&&kmDone>0)?f(tDone/kmDone):"–";
 if(S.done){
-$("nl").textContent="Finished";$("nm").textContent="Final time "+f(S.fin/1000,1);
+$("nm").textContent="Final time "+f(S.fin/1000,1);
 var d=S.fin/1000-ts(),r0=Math.round(d);
-$("l1").hidden=true;$("l2").hidden=true;$("cd").textContent="";$("pc").textContent="";$("dist").textContent="";$("then").textContent="";
+$("l1").hidden=true;$("l2").hidden=true;$("cd").textContent="";$("pc").textContent="";$("dist").textContent="";
 st.className=Math.abs(r0)<=3?"ok":(d<0?"ease":"fast");
-st.textContent=Math.abs(r0)<2?"ON TARGET":Math.abs(r0)+" s "+(d<0?"EARLY":"LATE");
+st.innerHTML=Math.abs(r0)<2?B("ON TARGET"):B(d<0?"EARLY":"LATE",Math.abs(r0));
 $("pass").hidden=true;
 }else{
 $("l1").hidden=false;$("l2").hidden=false;
-$("nl").textContent="Next waypoint";$("nm").textContent=p[idx][0];
+$("nm").textContent=p[idx][0];
 var km=p[idx][1]-p[idx-1][1],rem=tg(idx)-tDone;
-if(km>0&&rem>0)$("pc").innerHTML=f(rem/km)+" <small>/km</small>";
-else{$("pc").innerHTML=km>0?"<small>Past plan time</small>":"";}
-$("dist").textContent="Target "+f(tg(idx))+" · "+Math.round(km*1000)+" m to go from last waypoint";
-$("then").textContent=idx<last?"Then: "+p[idx+1][0]+" at "+f(tg(idx+1)):"This is the finish";
+if(km>0&&rem>0){var pcs=f(rem/km);$("pc").innerHTML=pcs+" <small>/km</small>";$("pc").className=pcs.length>=5?"sm":""}
+else{$("pc").className="";$("pc").innerHTML=km>0?"<small>Past plan time</small>":"";}
+$("dist").textContent="for "+Math.round(km*1000)+" m";
 $("pass").hidden=false;$("pass").textContent=idx===last?"Finish":"Passed";
-if(!n){st.className="";st.innerHTML="HOLD PLAN PACE<small>Don't go out fast</small>"}
+if(!n){st.className="";st.innerHTML=B("HOLD PLAN PACE")}
 else{
 var dl=Math.round(tDone-tg(n)),ab=Math.abs(dl);
-if(dl<-EASE){st.className="ease";st.innerHTML="EASE OFF<small>"+ab+" s ahead at last waypoint</small>"}
-else if(dl>FAST){st.className="fast";st.innerHTML="SPEED UP<small>"+ab+" s behind at last waypoint</small>"}
-else{st.className="ok";st.innerHTML="ON PLAN<small>"+(ab<2?"right on schedule":ab+" s "+(dl<0?"ahead":"behind")+" at last waypoint")+"</small>"}
+if(dl<-EASE){st.className="ease";st.innerHTML=B("EASE OFF",ab)}
+else if(dl>FAST){st.className="fast";st.innerHTML=B("SPEED UP",ab)}
+else{st.className="ok";st.innerHTML=B("ON PLAN",ab<2?0:ab)}
 }
 }
-var h="",stop=S.done?1:Math.max(1,n-2);
-for(var i=n;i>=stop;i--){var a=S.p[i-1]/1000,dl2=a-tg(i),r=Math.round(dl2);
-h+="<li><span>"+p[i][0]+" · "+f(a,1)+"</span><span class=\""+(r<=0?"ok":"late")+"\">"+(Math.abs(r)<2?"on plan":Math.abs(r)+" s "+(r<0?"ahead":"behind"))+"</span></li>"}
+var h="";
+for(var k=0;k<3;k++){var i=n-1-k;
+if(i<1){h+='<div class="card"><div class="dv">–</div></div>';continue}
+var r=Math.round(S.p[i-1]/1000-tg(i)),c=r<-EASE?"ease":(r>FAST?"fast":"ok");
+h+='<div class="card"><div class="dv '+c+'">'+Math.abs(r)+' s<small>'+(c=="ease"?"ahead":c=="fast"?"behind":"on pace")+'</small></div></div>'}
 $("log").innerHTML=h;
 tick();
 }
+function B(l,n){return"<span>"+l+"</span>"+(n?'<span class="n">'+n+" s</span>":"")}
 function tick(){
 if(!S.t0)return;
 var e=S.done?S.fin/1000:(Date.now()-S.t0)/1000;
 $("el").textContent=f(e,1);
-if(!S.done){var d=tg(S.p.length+1)-e;$("cd").textContent=d>=0?f(d,1):"+"+f(-d,1);$("cd").className=d>=0?"":"late"}
+if(!S.done){var d=tg(S.p.length+1)-e,t=d>=0?f(d,1):"+"+f(-d,1);$("cd").textContent=t;$("cd").className=(d>=0?"":"late")+(t.length>=6?" sm":"")}
 }
 $("course").addEventListener("change",function(){S.c=this.value;save();preview()});
 function num(){S.m=Math.min(60,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}

@@ -45,7 +45,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .grid3 .k{font-size:13px;color:var(--mute);font-weight:600}
 .grid3 .v{font-size:26px;font-weight:800;line-height:1.2;white-space:nowrap}
 .ok{color:var(--ok)}.late{color:var(--late)}
-#pass{font-size:30px;padding:26px 14px;margin-top:auto}
+#pass{font-size:30px;padding:26px 14px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 .grid3 .dv{font-size:min(7.5vw,30px);font-weight:900;line-height:1.2;color:var(--mute)}
 .dv small{display:block;font-size:14px;font-weight:700;line-height:1.1;margin-top:2px}
 .dv.c-ok{color:var(--ok)}.dv.c-ease{color:var(--late)}.dv.c-fast{color:var(--red)}
@@ -57,8 +57,8 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .fin .r1 span:last-child{white-space:nowrap}
 .fin .r2{font-size:14px;color:var(--mute);margin-top:2px}
 .fin .r2 b{font-weight:800}
-.btns{display:flex;gap:10px;margin-top:48px}
-#run{min-height:calc(100vh - 34px);min-height:calc(100dvh - 34px)}
+.btns{display:flex;gap:10px;margin-top:auto;padding-top:24px}
+#run{min-height:calc(100vh + 66px);min-height:calc(100dvh + 66px)}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -88,15 +88,15 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <div id="pc"></div>
 <div id="dist"></div>
 </div>
+<button id="pass">Passed</button>
 <div class="grid3">
-<div class="card"><div class="k">Elapsed</div><div class="v" id="el">0:00</div></div>
+<div class="card"><div class="k">Time /mins</div><div class="v" id="el">0:00</div></div>
 <div class="card"><div class="k" id="k2">Dist /km</div><div class="v" id="d2">0.00 km</div></div>
 <div class="card"><div class="k" id="k3">Avg /km</div><div class="v" id="p3">–</div></div>
 </div>
 <div class="sub" id="lgl">Last 3 segments vs plan pace</div>
 <div class="grid3" id="log"></div>
 <ul class="fin" id="fin" hidden></ul>
-<button id="pass">Passed</button>
 <div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="reset">Reset</button></div>
 </section>
 </main>
@@ -188,7 +188,7 @@ var h2="";
 for(var k=0;k<3;k++){var j=n-k;
 if(j<1){h2+='<div class="card"><div class="dv">–</div></div>';continue}
 var q=seg(j);
-h2+='<div class="card"><div class="dv c-'+q.c+'">'+q.u+'<small>'+(q.c=="ease"?"too fast":q.c=="fast"?"too slow":"on pace")+'</small></div></div>'}
+h2+='<div class="card"><div class="dv c-'+q.c+'">'+q.u+'<small>'+(q.c=="ease"?"fast":q.c=="fast"?"slow":"on pace")+'</small></div></div>'}
 gl.innerHTML=h2;
 }
 tick();
@@ -209,12 +209,17 @@ if(!S.done){var d=tg(S.p.length+1)-e,t=d>=0?f(d,1):"+"+f(-d,1);$("cd").textConte
 $("course").addEventListener("change",function(){S.c=this.value;save();preview()});
 function num(){S.m=Math.min(60,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}
 $("go").addEventListener("click",function(){num();S.t0=Date.now();S.p=[];S.done=false;S.fin=0;save();lock();view()});
-$("pass").addEventListener("click",function(){
+var lastPass=0;
+function passNow(){
 if(S.done)return;
-var e=Date.now()-S.t0;S.p.push(e);
+var now=Date.now();if(now-lastPass<500)return;lastPass=now;
+var e=now-S.t0;S.p.push(e);
 if(S.p.length>=P().length-1){S.done=true;S.fin=e;if(wl){try{wl.release()}catch(x){}}}
 save();view();
-});
+}
+/* Act on touch-down (the button also has touch-action:none), so a tap with a little finger movement is never read as a scroll. The click handler is only for keyboard activation (detail 0). */
+$("pass").addEventListener("pointerdown",function(ev){ev.preventDefault();passNow()});
+$("pass").addEventListener("click",function(ev){if(ev.detail===0)passNow()});
 $("undo").addEventListener("click",function(){
 if(!S.p.length)return;
 S.p.pop();if(S.done){S.done=false;S.fin=0;lock()}save();view();

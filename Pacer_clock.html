@@ -34,7 +34,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 #pc{font-size:min(18vw,76px);font-weight:900;line-height:1;letter-spacing:-.02em;white-space:nowrap}
 #pc.sm{font-size:min(16vw,66px)}
 #pc small{font-size:.38em;font-weight:800;color:var(--mute);letter-spacing:0}
-#dist{font-size:20px;font-weight:700;margin-top:8px}
+#dist{font-size:30px;font-weight:700;margin-top:8px}
 #st{font-size:min(10vw,44px);font-weight:900;line-height:1.1;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 12px;text-align:center;border-radius:14px;padding:10px;border:3px solid var(--line);background:var(--card)}
 #st.ok{border-color:var(--ok);color:var(--ok)}
 #st.ease{border-color:var(--late);color:var(--late)}
@@ -84,7 +84,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <div id="nm"></div>
 <div class="lab" id="l1">in</div>
 <div id="cd"></div>
-<div class="lab" id="l2">Run</div>
+<div class="lab" id="l2">Segment target pace</div>
 <div id="pc"></div>
 <div id="dist"></div>
 </div>
@@ -204,7 +204,7 @@ function tick(){
 if(!S.t0)return;
 var e=S.done?S.fin/1000:(Date.now()-S.t0)/1000;
 $("el").textContent=f(e,1);
-if(!S.done){var d=tg(S.p.length+1)-e,t=d>=0?f(d,1):"+"+f(-d,1);$("cd").textContent=t;$("cd").className=(d>=0?"":"late")+(t.length>=6?" sm":"")}
+if(!S.done){var d=tg(S.p.length+1)-e,t=d>=0?f(d,1):"−"+f(-d,1);$("cd").textContent=t;$("cd").className=(d>=0?"":"late")+(t.length>=6?" sm":"")}
 }
 $("course").addEventListener("change",function(){S.c=this.value;save();preview()});
 function num(){S.m=Math.min(60,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}

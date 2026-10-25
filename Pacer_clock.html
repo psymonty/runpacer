@@ -76,7 +76,8 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 var C={
 sot:{n:"Southampton parkrun",p:[["Start",0,0],["Left turn near park exit",.457,.0954],["Start of Cemetery Lake",.857,.1715],["Left turn after lake",1.064,.2123],["Start junction",1.302,.2599],["Cowherds Inn car park",1.622,.327],["Cross-paths after boating lake",2.163,.4416],["Left turn at top of hill",2.677,.5515],["Point-out cross-paths",3.066,.6266],["Park exit",3.769,.759],["Start of lake",4.169,.835],["Left turn after Cemetery Lake",4.376,.8758],["Start junction",4.609,.9223],["Left turn to finish",4.931,.9884],["Finish",5,1]]},
 eas:{n:"Eastleigh parkrun",p:[["Start",0,0],["Lap 1 NE corner (left)",.326,.0652],["Lap 1 SW corner (left)",.83,.166],["Lap 1 N hairpin (right)",1.217,.2434],["Lap 1 finish junction",1.581,.3162],["Lap 1 done – start line",1.709,.3418],["Lap 2 NE corner (left)",2.036,.4072],["Lap 2 SW corner (left)",2.54,.508],["Lap 2 N hairpin (right)",2.926,.5852],["Lap 2 finish junction",3.291,.6582],["Lap 2 done – start line",3.419,.6838],["Lap 3 NE corner (left)",3.745,.749],["Lap 3 SW corner (left)",4.249,.8498],["Lap 3 N hairpin (right)",4.635,.927],["Finish",5,1]]},
-wm:{n:"Water Meadows 5k",p:[["Start – St Cross corner of wall",0,0],["Garnier Road crossing",.56,.1128],["New Hall",1.25,.2511],["Wharf Hill",1.52,.3072],["Boat club right turn",1.67,.3361],["St Cats CP",2.38,.4778],["Old railway bridge",3.57,.715],["Viaduct junction",3.78,.7556],["Right turn to head North",4.33,.8656],["Finish",5,1]]}
+wm:{n:"Water Meadows 5k",p:[["Start – St Cross corner of wall",0,0],["Garnier Road crossing",0.564,0.113],["New Hall",1.252,0.2512],["Wharf Hill",1.524,0.3072],["Boat club right turn",1.667,0.3359],["St Cats CP",2.38,0.4778],["Old railway bridge",3.572,0.715],["Viaduct junction",3.777,0.7554],["Right turn to head North",4.333,0.8657],["Finish",5,1]]},
+win:{n:"Winchester 5k road loop",p:[["Start – Honeysuckle Close",0,0],["Left on Christchurch Rd",0.705,0.1307],["Left on Ranelagh Rd",1.219,0.2345],["Left on Cromwell Rd",1.41,0.2719],["Left bend on Cromwell Rd",1.893,0.3727],["Right onto Stanmore Lane",2.115,0.4168],["Left Wavell Way",2.326,0.4676],["Left on Minden Way",2.971,0.6058],["Silverwood Close",3.605,0.7261],["Hazel Grove then right turn",3.847,0.77],["Ridgeway junction – straight on",4.202,0.8509],["Left on Plough Way",4.482,0.9063],["Bottom of Plough Way",4.683,0.9411],["End of Plough Way",4.804,0.9635],["Finish",5,1]]}
 };
 var KEY="pacerClock1",S=load()||{c:"wm",m:30,s:0,t0:null,p:[],done:false,fin:0},wl=null;
 function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
@@ -145,8 +146,12 @@ $("undo").addEventListener("click",function(){
 if(!S.p.length)return;
 S.p.pop();if(S.done){S.done=false;S.fin=0;lock()}save();view();
 });
+var rt=null;
 $("reset").addEventListener("click",function(){
-if(confirm("Reset the clock and clear this run?")){S.t0=null;S.p=[];S.done=false;S.fin=0;save();if(wl){try{wl.release()}catch(x){}}view()}
+var b=this;
+if(!rt){b.textContent="Tap again to reset";rt=setTimeout(function(){rt=null;b.textContent="Reset"},3000);return}
+clearTimeout(rt);rt=null;b.textContent="Reset";
+S.t0=null;S.p=[];S.done=false;S.fin=0;save();if(wl){try{wl.release()}catch(x){}}view();
 });
 setInterval(tick,200);
 view();

@@ -7,10 +7,10 @@
 <meta name="apple-mobile-web-app-title" content="Pacer clock">
 <title>Pacer clock</title>
 <style>
-:root{--bg:#EEF2F5;--card:#FFFFFF;--ink:#10202C;--mute:#5B6B78;--line:#CBD5DD;--act:#0A58E0;--actink:#FFFFFF;--ok:#12703A;--late:#B34700;
+:root{--bg:#EEF2F5;--card:#FFFFFF;--ink:#10202C;--mute:#5B6B78;--line:#CBD5DD;--act:#0A58E0;--actink:#FFFFFF;--ok:#12703A;--late:#B34700;--red:#B3261E;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FF9A55;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FF9A55;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FF9A55;--red:#FF7A70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FF9A55;--red:#FF7A70;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
@@ -25,11 +25,23 @@ button.sec{background:var(--card);color:var(--ink);border:1px solid var(--line);
 button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--act);outline-offset:2px}
 .plan{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:15px;margin:0;padding:0;list-style:none}
 .plan li{display:contents}.plan span:last-child{font-weight:700}
-#el{font-size:min(26vw,120px);font-weight:800;line-height:1;text-align:center;letter-spacing:-.02em;padding:6px 0}
+#el{font-size:30px;font-weight:800;line-height:1.1}
 .sub{color:var(--mute);font-size:14px;text-align:center}
-#nm{font-size:26px;font-weight:800;line-height:1.15}
-#tt{font-size:44px;font-weight:800;line-height:1.1}
-#cd{font-size:20px;font-weight:700}
+.lab{font-size:20px;font-weight:700;color:var(--mute);margin-top:14px}
+#nm{font-size:min(10vw,44px);font-weight:900;line-height:1.1;margin-top:2px}
+#cd{font-size:min(22vw,92px);font-weight:900;line-height:1;letter-spacing:-.02em}
+#pc{font-size:min(22vw,92px);font-weight:900;line-height:1;letter-spacing:-.02em}
+#pc small{font-size:.38em;font-weight:800;color:var(--mute);letter-spacing:0}
+#dist{font-size:20px;font-weight:700;margin-top:12px}
+#st{font-size:min(8vw,34px);font-weight:900;line-height:1.15;text-align:center;border-radius:14px;padding:14px 10px;border:3px solid var(--line);background:var(--card)}
+#st.ok{border-color:var(--ok);color:var(--ok)}
+#st.ease{border-color:var(--late);color:var(--late)}
+#st.fast{border-color:var(--red);color:var(--red)}
+#st small{display:block;font-size:.55em;font-weight:700;color:var(--mute)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.grid3 .card{padding:10px 4px}
+.grid3 .k{font-size:13px;color:var(--mute);font-weight:600}
+.grid3 .v{font-size:26px;font-weight:800;line-height:1.2}
 .ok{color:var(--ok)}.late{color:var(--late)}
 #pass{font-size:30px;padding:30px 14px;margin-top:auto}
 .log{font-size:14px;color:var(--mute);margin:0;padding:0;list-style:none;display:grid;gap:3px}
@@ -53,16 +65,23 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 </section>
 
 <section id="run" hidden style="display:flex;flex-direction:column;gap:12px;flex:1">
-<div id="el">0:00</div>
 <div class="sub" id="meta"></div>
+<div id="st"></div>
 <div class="card">
-<div class="sub" style="text-align:left" id="nl">Next waypoint</div>
+<div class="sub" style="text-align:left;font-size:18px;font-weight:700" id="nl">Next waypoint</div>
 <div id="nm"></div>
-<div id="tt"></div>
+<div class="lab" id="l1">Time to waypoint</div>
 <div id="cd"></div>
-<div class="sub" style="text-align:left;margin-top:6px" id="pc"></div>
+<div class="lab" id="l2">Pace to arrive on time</div>
+<div id="pc"></div>
+<div id="dist"></div>
 </div>
-<div class="sub" id="then"></div>
+<div class="grid3">
+<div class="card"><div class="k">Elapsed</div><div class="v" id="el">0:00</div></div>
+<div class="card"><div class="k" id="k2">Plan dist</div><div class="v" id="d2">0.00 km</div></div>
+<div class="card"><div class="k" id="k3">Avg pace</div><div class="v" id="p3">–</div></div>
+</div>
+<div class="sub" id="then" style="font-size:16px"></div>
 <ul class="log" id="log"></ul>
 <button id="pass">Passed</button>
 <div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="reset">Reset</button></div>
@@ -104,6 +123,7 @@ var h="",p=P();
 for(var i=0;i<p.length;i++)h+="<li><span>"+p[i][0]+"</span><span>"+f(tg(i))+"</span></li>";
 $("prev").innerHTML=h;
 }
+var EASE=10,FAST=5; /* seconds ahead before "ease off"; seconds behind before "speed up" */
 function view(){
 var run=!!S.t0;
 $("setup").hidden=run;$("run").hidden=!run;
@@ -111,22 +131,39 @@ if(!run){setup();return}
 dropInputs();
 var p=P(),n=S.p.length,idx=n+1,last=p.length-1;
 $("meta").textContent=C[S.c].n+" · target "+f(ts());
+var st=$("st");
+/* last-waypoint stats (n = index of last waypoint passed, 0 = start) */
+var kmDone=p[n][1],tDone=n?S.p[n-1]/1000:0;
+$("k2").textContent=n?"Plan distance to last waypoint":"Plan distance";
+$("d2").textContent=kmDone.toFixed(2)+" km";
+$("k3").textContent="Avg pace to last waypoint";
+$("p3").textContent=(n&&kmDone>0)?f(tDone/kmDone):"–";
 if(S.done){
 $("nl").textContent="Finished";$("nm").textContent="Final time "+f(S.fin/1000,1);
-var d=S.fin/1000-ts();
-$("tt").textContent=Math.abs(Math.round(d))<2?"On target":Math.abs(Math.round(d))+" s "+(d<0?"early":"late");
-$("tt").className=Math.abs(d)<=3?"ok":"late";$("cd").textContent="";$("pc").textContent="";$("then").textContent="";
+var d=S.fin/1000-ts(),r0=Math.round(d);
+$("l1").hidden=true;$("l2").hidden=true;$("cd").textContent="";$("pc").textContent="";$("dist").textContent="";$("then").textContent="";
+st.className=Math.abs(r0)<=3?"ok":(d<0?"ease":"fast");
+st.textContent=Math.abs(r0)<2?"ON TARGET":Math.abs(r0)+" s "+(d<0?"EARLY":"LATE");
 $("pass").hidden=true;
 }else{
-$("nl").textContent="Next waypoint";$("nm").textContent=p[idx][0];$("tt").textContent=f(tg(idx));$("tt").className="";
-var km=p[idx][1]-p[idx-1][1];
-var a=n?S.p[n-1]/1000:0,rem=tg(idx)-a;
-$("pc").textContent=km>0?(rem>0?"Target pace to next waypoint "+f(rem/km)+"/km · "+Math.round(km*1000)+" m":"Past plan time for this waypoint · "+Math.round(km*1000)+" m"):"";
+$("l1").hidden=false;$("l2").hidden=false;
+$("nl").textContent="Next waypoint";$("nm").textContent=p[idx][0];
+var km=p[idx][1]-p[idx-1][1],rem=tg(idx)-tDone;
+if(km>0&&rem>0)$("pc").innerHTML=f(rem/km)+" <small>/km</small>";
+else{$("pc").innerHTML=km>0?"<small>Past plan time</small>":"";}
+$("dist").textContent="Target "+f(tg(idx))+" · "+Math.round(km*1000)+" m to go from last waypoint";
 $("then").textContent=idx<last?"Then: "+p[idx+1][0]+" at "+f(tg(idx+1)):"This is the finish";
 $("pass").hidden=false;$("pass").textContent=idx===last?"Finish":"Passed";
+if(!n){st.className="";st.innerHTML="HOLD PLAN PACE<small>Don't go out fast</small>"}
+else{
+var dl=Math.round(tDone-tg(n)),ab=Math.abs(dl);
+if(dl<-EASE){st.className="ease";st.innerHTML="EASE OFF<small>"+ab+" s ahead at last waypoint</small>"}
+else if(dl>FAST){st.className="fast";st.innerHTML="SPEED UP<small>"+ab+" s behind at last waypoint</small>"}
+else{st.className="ok";st.innerHTML="ON PLAN<small>"+(ab<2?"right on schedule":ab+" s "+(dl<0?"ahead":"behind")+" at last waypoint")+"</small>"}
 }
-var h="";
-for(var i=n;i>=1;i--){var a=S.p[i-1]/1000,dl=a-tg(i),r=Math.round(dl);
+}
+var h="",stop=S.done?1:Math.max(1,n-2);
+for(var i=n;i>=stop;i--){var a=S.p[i-1]/1000,dl2=a-tg(i),r=Math.round(dl2);
 h+="<li><span>"+p[i][0]+" · "+f(a,1)+"</span><span class=\""+(r<=0?"ok":"late")+"\">"+(Math.abs(r)<2?"on plan":Math.abs(r)+" s "+(r<0?"ahead":"behind"))+"</span></li>"}
 $("log").innerHTML=h;
 tick();
@@ -135,7 +172,7 @@ function tick(){
 if(!S.t0)return;
 var e=S.done?S.fin/1000:(Date.now()-S.t0)/1000;
 $("el").textContent=f(e,1);
-if(!S.done){var d=tg(S.p.length+1)-e;$("cd").textContent=d>=0?"in "+f(d,1):f(-d,1)+" past target";$("cd").className=d>=0?"":"late"}
+if(!S.done){var d=tg(S.p.length+1)-e;$("cd").textContent=d>=0?f(d,1):"+"+f(-d,1);$("cd").className=d>=0?"":"late"}
 }
 $("course").addEventListener("change",function(){S.c=this.value;save();preview()});
 function num(){S.m=Math.min(60,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}

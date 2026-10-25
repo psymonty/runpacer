@@ -7,10 +7,10 @@
 <meta name="apple-mobile-web-app-title" content="Pacer clock">
 <title>Pacer clock</title>
 <style>
-:root{--bg:#EEF2F5;--card:#FFFFFF;--ink:#10202C;--mute:#5B6B78;--line:#CBD5DD;--act:#0A58E0;--actink:#FFFFFF;--ok:#12703A;--late:#B34700;--red:#B3261E;
+:root{--bg:#EEF2F5;--card:#FFFFFF;--ink:#10202C;--mute:#5B6B78;--line:#CBD5DD;--act:#0A58E0;--actink:#FFFFFF;--ok:#12703A;--late:#EB6200;--red:#B3261E;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FF9A55;--red:#FF7A70;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FF9A55;--red:#FF7A70;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FFA229;--red:#FF7A70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FFA229;--red:#FF7A70;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
@@ -48,7 +48,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 #pass{font-size:30px;padding:26px 14px;margin-top:auto}
 .grid3 .dv{font-size:min(7.5vw,30px);font-weight:900;line-height:1.2;color:var(--mute)}
 .dv small{display:block;font-size:14px;font-weight:700;line-height:1.1;margin-top:2px}
-.dv.ok{color:var(--ok)}.dv.ease{color:var(--late)}.dv.fast{color:var(--red)}
+.dv.c-ok{color:var(--ok)}.dv.c-ease{color:var(--late)}.dv.c-fast{color:var(--red)}
 #lgl{margin-bottom:-6px}
 .c-ok{color:var(--ok)}.c-ease{color:var(--late)}.c-fast{color:var(--red)}
 .fin{margin:0;padding:0;list-style:none;display:grid;gap:8px}
@@ -188,7 +188,7 @@ var h2="";
 for(var k=0;k<3;k++){var j=n-k;
 if(j<1){h2+='<div class="card"><div class="dv">–</div></div>';continue}
 var q=seg(j);
-h2+='<div class="card"><div class="dv c-'+q.c+'">'+q.t+'<small>'+(q.c=="ease"?"ahead":q.c=="fast"?"behind":"on pace")+'</small></div></div>'}
+h2+='<div class="card"><div class="dv c-'+q.c+'">'+q.u+'<small>'+(q.c=="ease"?"too fast":q.c=="fast"?"too slow":"on pace")+'</small></div></div>'}
 gl.innerHTML=h2;
 }
 tick();
@@ -196,8 +196,8 @@ tick();
 /* segment i = from waypoint i-1 to waypoint i. t = % vs planned pace (+ slower, − faster); c = colour class from the % off planned pace */
 function seg(i){
 var p=P(),a=(S.p[i-1]-(i>1?S.p[i-2]:0))/1000,pl=tg(i)-tg(i-1),km=p[i][1]-p[i-1][1],pc=(a/pl-1)*100,ap=Math.abs(pc);
-var t=(pc<0?"−":"+")+(ap<10?ap.toFixed(1):Math.round(ap))+"%";
-return{t:t,c:pc<-EASEP?"ease":(pc>FASTP?"fast":"ok"),ap:a/km,pp:pl/km}
+var u=(ap<10?ap.toFixed(1):Math.round(ap))+"%",t=(pc<0?"−":"+")+u;
+return{t:t,u:u,c:pc<-EASEP?"ease":(pc>FASTP?"fast":"ok"),ap:a/km,pp:pl/km}
 }
 function B(l,n){return"<span>"+l+"</span>"+(n?'<span class="n">'+n+" s</span>":"")}
 function tick(){

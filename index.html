@@ -52,6 +52,10 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .dv.c-ok{color:var(--ok)}.dv.c-ease{color:var(--late)}.dv.c-fast{color:var(--red)}
 #lgl{margin-bottom:-6px}
 .c-ok{color:var(--ok)}.c-ease{color:var(--late)}.c-fast{color:var(--red)}
+#sc{font-size:min(22vw,88px);font-weight:900;line-height:1}
+#sc small{font-size:.35em;font-weight:800;color:var(--mute)}
+#sl{font-size:24px;font-weight:800;margin-top:2px}
+#s2,#s3{font-size:14px;margin-top:6px}
 .fin{margin:0;padding:0;list-style:none;display:grid;gap:8px}
 .fin li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
 .fin .r1{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:16px}
@@ -98,6 +102,11 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 </div>
 <div class="sub" id="lgl">Last 3 segments vs plan pace</div>
 <div class="grid3" id="log"></div>
+<div class="card" id="score" hidden style="text-align:center">
+<div class="sub" style="font-size:16px;font-weight:700">Pacing score</div>
+<div id="sc"></div><div id="sl"></div>
+<div class="sub" id="s2"></div><div class="sub" id="s3"></div>
+</div>
 <ul class="fin" id="fin" hidden></ul>
 <div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="reset">Reset</button></div>
 </section>
@@ -165,9 +174,11 @@ $("pass").hidden=true;
 }else{
 $("l1").hidden=false;$("l2").hidden=false;
 $("nm").textContent=p[idx][0];
-var km=p[idx][1]-p[idx-1][1],rem=tg(idx)-tDone;
-if(km>0&&rem>0){var pcs=f(rem/km);$("pc").innerHTML=pcs+" <small>/km</small>";$("pc").className=pcs.length>=5?"sm":""}
-else{$("pc").className="";$("pc").innerHTML=km>0?"<small>Past plan time</small>":"";}
+var km=p[idx][1]-p[idx-1][1];
+/* Target pace = this segment's planned pace plus a share of the time gap, spread over about 10% of the course (at least this segment, at most what is left) and limited to ±10% of planned pace. So a big gap never demands an impossible pace. */
+if(km>0){var pp=(tg(idx)-tg(n))/km,L=Math.min(Math.max(km,p[last][1]*.1),p[last][1]-p[n][1]),tp=pp-(tDone-tg(n))/L;
+tp=Math.max(pp*.9,Math.min(pp*1.1,tp));var pcs=f(tp);$("pc").innerHTML=pcs+" <small>/km</small>";$("pc").className=pcs.length>=5?"sm":""}
+else{$("pc").className="";$("pc").innerHTML=""}
 $("dist").textContent="for "+Math.round(km*1000)+" m";$("ter").textContent=p[idx][3]||"";
 $("pass").hidden=false;$("pass").textContent=idx===last?"Finish":"Passed";
 if(!n){st.className="";st.innerHTML=B("HOLD PLAN PACE")}
@@ -179,7 +190,7 @@ else{st.className="ok";st.innerHTML=B("ON PLAN",ab<2?0:ab)}
 }
 }
 var gl=$("log"),fl=$("fin");
-$("nl").hidden=!S.done;
+$("nl").hidden=!S.done;if(!S.done)$("score").hidden=true;
 gl.hidden=S.done;$("lgl").hidden=S.done;fl.hidden=!S.done;
 if(S.done){
 var h="";
@@ -187,6 +198,7 @@ for(var i=n;i>=1;i--){var sg=seg(i),cr=Math.round(S.p[i-1]/1000-tg(i)),cc=cr<-EA
 h+='<li><div class="r1"><span>'+p[i][0]+" · "+f(S.p[i-1]/1000,1)+'</span><span class="c-'+cc+'">'+(Math.abs(cr)<2?"on plan":Math.abs(cr)+" s "+(cr<0?"ahead":"behind"))+'</span></div>'
 +'<div class="r2">'+f(sg.ap)+" /km (plan "+f(sg.pp)+") · <b class=\"c-"+sg.c+'">'+sg.t+"</b></div></li>"}
 fl.innerHTML=h;
+score(n);
 }else{
 var h2="";
 for(var k=0;k<3;k++){var j=n-k;
@@ -198,10 +210,25 @@ gl.innerHTML=h2;
 tick();
 }
 /* segment i = from waypoint i-1 to waypoint i. t = % vs planned pace (+ slower, − faster); c = colour class from the % off planned pace */
+/* Pacing score: distance-weighted average |% off planned segment pace|, ignoring the first 1% (button-tap timing), 10 points lost per 1% beyond that. 100 = plan followed exactly. */
+function score(n){
+var p=P(),sw=0,sd=0,sa=0,ok=0,th=[0,0,0],tn=[0,0,0];
+if(n<3){$("score").hidden=true;return}
+for(var i=1;i<=n;i++){var g=seg(i),a=Math.abs(g.pc),k=Math.min(2,Math.floor((i-1)*3/n));
+sw+=g.km;sd+=Math.max(0,a-1)*g.km;sa+=a*g.km;if(a<=3)ok++;th[k]+=g.pc*g.km;tn[k]+=g.km}
+var sc=Math.max(0,Math.round(100-10*sd/sw)),c=sc>=80?"ok":(sc>=50?"ease":"fast");
+var lb=sc>=90?"Excellent":sc>=80?"Very good":sc>=65?"Good":sc>=50?"Fair":"Erratic";
+var sg=function(x){return(x<0?"−":"+")+Math.abs(x).toFixed(1)+"%"};
+$("sc").className="c-"+c;$("sl").className="c-"+c;
+$("sc").innerHTML=sc+"<small> /100</small>";$("sl").textContent=lb;
+$("s2").textContent="Avg "+(sa/sw).toFixed(1)+"% off planned pace · "+ok+" of "+n+" segments within ±3%";
+$("s3").textContent="Start "+sg(th[0]/tn[0])+" · middle "+sg(th[1]/tn[1])+" · end "+sg(th[2]/tn[2])+" (− faster, + slower)";
+$("score").hidden=false;
+}
 function seg(i){
 var p=P(),a=(S.p[i-1]-(i>1?S.p[i-2]:0))/1000,pl=tg(i)-tg(i-1),km=p[i][1]-p[i-1][1],pc=(a/pl-1)*100,ap=Math.abs(pc);
 var u=(ap<10?ap.toFixed(1):Math.round(ap))+"%",t=(pc<0?"−":"+")+u;
-return{t:t,u:u,c:pc<-EASEP?"ease":(pc>FASTP?"fast":"ok"),ap:a/km,pp:pl/km}
+return{pc:pc,km:km,t:t,u:u,c:pc<-EASEP?"ease":(pc>FASTP?"fast":"ok"),ap:a/km,pp:pl/km}
 }
 function B(l,n){return"<span>"+l+"</span>"+(n?'<span class="n">'+n+" s</span>":"")}
 function tick(){

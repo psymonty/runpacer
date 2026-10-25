@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pacer clock">
+<title>Pacer clock</title>
+<style>
+:root{--bg:#EEF2F5;--card:#FFFFFF;--ink:#10202C;--mute:#5B6B78;--line:#CBD5DD;--act:#0A58E0;--actink:#FFFFFF;--ok:#12703A;--late:#EB6200;--red:#B3261E;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FFA229;--red:#FF7A70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B141B;--card:#15222C;--ink:#EEF3F7;--mute:#97A8B5;--line:#2A3B48;--act:#4C8DFF;--actink:#06111C;--ok:#4FCB86;--late:#FFA229;--red:#FF7A70;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+main{max-width:520px;margin:0 auto;padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px;min-height:100vh}
+h1{font-size:20px;margin:4px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+label{display:block;font-size:14px;color:var(--mute);margin-bottom:4px}
+select,input{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:10px}.row>div{flex:1}
+button{font:inherit;font-weight:700;border:0;border-radius:14px;padding:14px;background:var(--act);color:var(--actink);width:100%;font-size:20px}
+button.sec{background:var(--card);color:var(--ink);border:1px solid var(--line);font-size:16px;font-weight:600;padding:12px}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--act);outline-offset:2px}
+.plan{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:15px;margin:0;padding:0;list-style:none}
+.plan li{display:contents}.plan span:last-child{font-weight:700}
+#el{font-size:26px;font-weight:800;line-height:1.1}
+.sub{color:var(--mute);font-size:14px;text-align:center}
+.lab{font-size:17px;font-weight:700;color:var(--mute);margin-top:8px}
+#nm{font-size:min(8.5vw,36px);font-weight:900;line-height:1.1}
+#cd{font-size:min(18vw,76px);font-weight:900;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+#cd.sm{font-size:min(15vw,64px)}
+#pc{font-size:min(18vw,76px);font-weight:900;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+#pc.sm{font-size:min(16vw,66px)}
+#pc small{font-size:.38em;font-weight:800;color:var(--mute);letter-spacing:0}
+#ter{font-size:min(5.2vw,21px);font-weight:700;color:var(--mute);margin-top:4px}
+#dist{font-size:30px;font-weight:700;margin-top:8px}
+#st{font-size:min(10vw,44px);font-weight:900;line-height:1.1;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 12px;text-align:center;border-radius:14px;padding:10px;border:3px solid var(--line);background:var(--card)}
+#st.ok{border-color:var(--ok);color:var(--ok)}
+#st.ease{border-color:var(--late);color:var(--late)}
+#st.fast{border-color:var(--red);color:var(--red)}
+#st .n{font-size:inherit}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.grid3 .card{padding:10px 4px}
+.grid3 .k{font-size:13px;color:var(--mute);font-weight:600}
+.grid3 .v{font-size:26px;font-weight:800;line-height:1.2;white-space:nowrap}
+.ok{color:var(--ok)}.late{color:var(--late)}
+#pass{font-size:30px;padding:26px 14px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.grid3 .dv{font-size:min(7.5vw,30px);font-weight:900;line-height:1.2;color:var(--mute)}
+.dv small{display:block;font-size:14px;font-weight:700;line-height:1.1;margin-top:2px}
+.dv.c-ok{color:var(--ok)}.dv.c-ease{color:var(--late)}.dv.c-fast{color:var(--red)}
+#lgl{margin-bottom:-6px}
+.c-ok{color:var(--ok)}.c-ease{color:var(--late)}.c-fast{color:var(--red)}
+.fin{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.fin li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.fin .r1{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:16px}
+.fin .r1 span:last-child{white-space:nowrap}
+.fin .r2{font-size:14px;color:var(--mute);margin-top:2px}
+.fin .r2 b{font-weight:800}
+.btns{display:flex;gap:10px;margin-top:auto;padding-top:24px}
+#run{min-height:calc(100vh + 66px);min-height:calc(100dvh + 66px)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<section id="setup">
+<h1>Pacer clock</h1>
+<div class="card" style="margin-top:12px">
+<label for="course">Course</label>
+<select id="course"></select>
+<div class="row" id="tin" style="margin-top:12px"></div>
+</div>
+<div class="card" style="margin-top:12px"><ul class="plan" id="prev"></ul></div>
+<button id="go" style="margin-top:12px">Start clock</button>
+<p class="sub">Tap Start at the gun. The clock keeps time even if the screen locks.</p>
+</section>
+
+<section id="run" hidden style="display:flex;flex-direction:column;gap:12px;flex:1">
+<div class="sub" id="meta"></div>
+<div id="st"></div>
+<div class="card" style="text-align:center">
+<div class="sub" id="nl" hidden style="font-size:18px;font-weight:700">Finished</div>
+<div id="nm"></div>
+<div class="lab" id="l1">in</div>
+<div id="cd"></div>
+<div class="lab" id="l2">Segment target pace</div>
+<div id="pc"></div>
+<div id="dist"></div>
+<div id="ter"></div>
+</div>
+<button id="pass">Passed</button>
+<div class="grid3">
+<div class="card"><div class="k">Time /mins</div><div class="v" id="el">0:00</div></div>
+<div class="card"><div class="k" id="k2">Dist /km</div><div class="v" id="d2">0.00 km</div></div>
+<div class="card"><div class="k" id="k3">Avg /km</div><div class="v" id="p3">–</div></div>
+</div>
+<div class="sub" id="lgl">Last 3 segments vs plan pace</div>
+<div class="grid3" id="log"></div>
+<ul class="fin" id="fin" hidden></ul>
+<div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="reset">Reset</button></div>
+</section>
+</main>
+<script>
+"use strict";
+var C={
+sot:{n:"Southampton parkrun",p:[["Start",0,0],["Left turn near park exit",.457,.0954],["Start of Cemetery Lake",.857,.1715],["Left turn after lake",1.064,.2123],["Start junction",1.302,.2599],["Cowherds Inn car park",1.622,.327],["Cross-paths after boating lake",2.163,.4416],["Left turn at top of hill",2.677,.5515],["Point-out cross-paths",3.066,.6266],["Park exit",3.769,.759],["Start of lake",4.169,.835],["Left turn after Cemetery Lake",4.376,.8758],["Start junction",4.609,.9223],["Left turn to finish",4.931,.9884],["Finish",5,1]]},
+eas:{n:"Eastleigh parkrun",p:[["Start",0,0],["Lap 1 NE corner (left)",.326,.0652],["Lap 1 SW corner (left)",.83,.166],["Lap 1 N hairpin (right)",1.217,.2434],["Lap 1 finish junction",1.581,.3162],["Lap 1 done – start line",1.709,.3418],["Lap 2 NE corner (left)",2.036,.4072],["Lap 2 SW corner (left)",2.54,.508],["Lap 2 N hairpin (right)",2.926,.5852],["Lap 2 finish junction",3.291,.6582],["Lap 2 done – start line",3.419,.6838],["Lap 3 NE corner (left)",3.745,.749],["Lap 3 SW corner (left)",4.249,.8498],["Lap 3 N hairpin (right)",4.635,.927],["Finish",5,1]]},
+wm:{n:"Water Meadows 5k",p:[["Start – St Cross corner of wall",0,0],["Garnier Road crossing",0.564,0.113],["New Hall",1.252,0.2512],["Wharf Hill",1.524,0.3072],["Boat club right turn",1.667,0.3359],["St Cats CP",2.38,0.4778],["Old railway bridge",3.572,0.715],["Viaduct junction",3.777,0.7554],["Right turn to head North",4.333,0.8657],["Finish",5,1]]},
+win:{n:"Winchester 5k road loop",p:[["Start – Honeysuckle Close",0,0],["Left on Christchurch Rd",0.705,0.1307],["Left on Ranelagh Rd",1.219,0.2345],["Left on Cromwell Rd",1.41,0.2719],["Left bend on Cromwell Rd",1.893,0.3727],["Right onto Stanmore Lane",2.115,0.4168],["Left Wavell Way",2.326,0.4676],["Left on Minden Way",2.971,0.6058],["Silverwood Close",3.605,0.7261],["Hazel Grove then right turn",3.847,0.77],["Ridgeway junction – straight on",4.202,0.8509],["Left on Plough Way",4.482,0.9063],["Bottom of Plough Way",4.683,0.9411],["End of Plough Way",4.804,0.9635],["Finish",5,1]]},
+cla:{n:"Clarendon Marathon",d:270,e:25,f:12,p:[["Start – Laverstock",0.0,0.0],["Mile 26 · Laverstock",0.5,0.0108,"Road · flat"],["Mile 25 · nr Milford",2.109,0.0475,"Road → Gravel · flat"],["Mile 24 · King Manor Hill",3.718,0.0875,"Gravel → Road → Soft · climb +46 m"],["Mile 23 · past King Manor Hill",5.328,0.1271,"Gravel → Soft · climb +30 m"],["Mile 22 · approaching Pitton",6.937,0.1631,"Soft · descent −56 m"],["Mile 21 · past Pitton",8.546,0.2034,"Soft → Road · climb +48 m"],["Mile 20 · nr Middle Winterslow",10.156,0.242,"Soft · flat"],["Mile 19 · nr East Winterslow",11.765,0.2801,"Soft → Gravel · rolling"],["Mile 18 · leaving Winterslow",13.374,0.3164,"Gravel → Road · descent −12 m"],["Mile 17 · downs E of Winterslow",14.984,0.3534,"Soft → Road → Gravel · descent −13 m"],["Mile 16 · open downland",16.593,0.3899,"Soft → Road · descent −24 m"],["Mile 15 · S of Whiteshoot Hill",18.202,0.4278,"Road → Soft · rolling"],["Mile 14 · approaching Broughton",19.812,0.4675,"Soft · rolling"],["Mile 13 · Broughton (half start)",21.421,0.5017,"Soft → Road · descent −44 m"],["Mile 12 · Broughton to Houghton",23.03,0.5397,"Soft → Gravel · flat"],["Mile 11 · nr Houghton",24.64,0.5753,"Gravel · descent −13 m"],["Mile 10 · Yew Hill",26.249,0.6137,"Gravel · climb +30 m"],["Mile 9 · King's Somborne",27.858,0.6485,"Road · descent −22 m"],["Mile 8 · nr Ashley",29.468,0.6905,"Soft · climb +47 m"],["Mile 7 · Ashley Down",31.077,0.7298,"Soft · rolling"],["Mile 6 · Beacon Hill",32.686,0.7736,"Soft · climb +72 m"],["Mile 5 · Farley Mount (mini start)",34.296,0.8096,"Soft · descent −46 m"],["Mile 4 · nr Pitt Down",35.905,0.8476,"Soft → Gravel · climb +11 m"],["Mile 3 · nr Stockers Down",37.514,0.8864,"Soft · climb +11 m"],["Mile 2 · Stockers Down",39.124,0.923,"Soft · descent −27 m"],["Mile 1 · Rabbit Warren",40.733,0.9638,"Soft · climb +37 m"],["Finish – Winchester",42.342,1.0,"Soft → Road · flat"]]}
+};
+var KEY="pacerClock1",S=load()||{c:"wm",m:30,s:0,t0:null,p:[],done:false,fin:0},wl=null;
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function f(s,fl){s=fl?Math.floor(s):Math.round(s);if(s<0)s=0;var h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return(h?h+":"+(m<10?"0":"")+m:m)+":"+(r<10?"0":"")+r}
+function ts(){return S.m*60+S.s}
+function P(){return C[S.c].p}
+function tg(i){return P()[i][2]*ts()}
+async function lock(){try{wl=await navigator.wakeLock.request("screen")}catch(e){}}
+document.addEventListener("visibilitychange",function(){if(S.t0&&!S.done&&document.visibilityState==="visible")lock()});
+
+function setup(){
+var sel=$("course");
+if(!sel.options.length){for(var k in C){var o=document.createElement("option");o.value=k;o.textContent=C[k].n;sel.appendChild(o)}}
+sel.value=S.c;buildInputs();preview();
+}
+/* The time boxes only exist on the setup screen. Removing them on Start clears iOS's typing-undo history, so a shake while running can no longer pop up "Undo Typing". */
+function buildInputs(){
+$("tin").innerHTML='<div><label for="min">Target minutes</label><input id="min" type="number" inputmode="numeric" min="10" max="600" autocomplete="off"></div><div><label for="sec">Seconds</label><input id="sec" type="number" inputmode="numeric" min="0" max="59" autocomplete="off"></div>';
+$("min").value=S.m;$("sec").value=S.s;
+$("min").addEventListener("input",num);$("sec").addEventListener("input",num);
+}
+function dropInputs(){var a=document.activeElement;if(a&&a.blur)a.blur();$("tin").innerHTML=""}
+function preview(){
+var h="",p=P();
+for(var i=0;i<p.length;i++)h+="<li><span>"+p[i][0]+"</span><span>"+f(tg(i))+"</span></li>";
+$("prev").innerHTML=h;
+}
+var EASE=10,FAST=5,EASEP=6,FASTP=3; /* EASEP/FASTP: % faster / % slower than planned segment pace before orange / red (about the same as 10 s / 5 s over a typical ~170 s segment) */ /* seconds ahead before "ease off"; seconds behind before "speed up" */
+function view(){
+var run=!!S.t0;
+$("setup").hidden=run;$("run").hidden=!run;
+if(!run){setup();return}
+dropInputs();
+EASE=C[S.c].e||10;FAST=C[S.c].f||5;
+var p=P(),n=S.p.length,idx=n+1,last=p.length-1;
+$("meta").textContent=C[S.c].n+" · target "+f(ts());
+var st=$("st");
+/* last-waypoint stats (n = index of last waypoint passed, 0 = start) */
+var kmDone=p[n][1],tDone=n?S.p[n-1]/1000:0;
+$("k2").textContent="Dist /km";
+$("d2").textContent=kmDone.toFixed(2);
+$("k3").textContent="Avg /km";
+$("p3").textContent=(n&&kmDone>0)?f(tDone/kmDone):"–";
+if(S.done){
+$("nm").textContent="Final time "+f(S.fin/1000,1);
+var d=S.fin/1000-ts(),r0=Math.round(d);
+$("l1").hidden=true;$("l2").hidden=true;$("cd").textContent="";$("pc").textContent="";$("dist").textContent="";$("ter").textContent="";
+st.className=Math.abs(r0)<=3?"ok":(d<0?"ease":"fast");
+st.innerHTML=Math.abs(r0)<2?B("ON TARGET"):B(d<0?"EARLY":"LATE",Math.abs(r0));
+$("pass").hidden=true;
+}else{
+$("l1").hidden=false;$("l2").hidden=false;
+$("nm").textContent=p[idx][0];
+var km=p[idx][1]-p[idx-1][1],rem=tg(idx)-tDone;
+if(km>0&&rem>0){var pcs=f(rem/km);$("pc").innerHTML=pcs+" <small>/km</small>";$("pc").className=pcs.length>=5?"sm":""}
+else{$("pc").className="";$("pc").innerHTML=km>0?"<small>Past plan time</small>":"";}
+$("dist").textContent="for "+Math.round(km*1000)+" m";$("ter").textContent=p[idx][3]||"";
+$("pass").hidden=false;$("pass").textContent=idx===last?"Finish":"Passed";
+if(!n){st.className="";st.innerHTML=B("HOLD PLAN PACE")}
+else{
+var dl=Math.round(tDone-tg(n)),ab=Math.abs(dl);
+if(dl<-EASE){st.className="ease";st.innerHTML=B("EASE OFF",ab)}
+else if(dl>FAST){st.className="fast";st.innerHTML=B("SPEED UP",ab)}
+else{st.className="ok";st.innerHTML=B("ON PLAN",ab<2?0:ab)}
+}
+}
+var gl=$("log"),fl=$("fin");
+$("nl").hidden=!S.done;
+gl.hidden=S.done;$("lgl").hidden=S.done;fl.hidden=!S.done;
+if(S.done){
+var h="";
+for(var i=n;i>=1;i--){var sg=seg(i),cr=Math.round(S.p[i-1]/1000-tg(i)),cc=cr<-EASE?"ease":(cr>FAST?"fast":"ok");
+h+='<li><div class="r1"><span>'+p[i][0]+" · "+f(S.p[i-1]/1000,1)+'</span><span class="c-'+cc+'">'+(Math.abs(cr)<2?"on plan":Math.abs(cr)+" s "+(cr<0?"ahead":"behind"))+'</span></div>'
++'<div class="r2">'+f(sg.ap)+" /km (plan "+f(sg.pp)+") · <b class=\"c-"+sg.c+'">'+sg.t+"</b></div></li>"}
+fl.innerHTML=h;
+}else{
+var h2="";
+for(var k=0;k<3;k++){var j=n-k;
+if(j<1){h2+='<div class="card"><div class="dv">–</div></div>';continue}
+var q=seg(j);
+h2+='<div class="card"><div class="dv c-'+q.c+'">'+q.u+'<small>'+(q.c=="ease"?"fast":q.c=="fast"?"slow":"on pace")+'</small></div></div>'}
+gl.innerHTML=h2;
+}
+tick();
+}
+/* segment i = from waypoint i-1 to waypoint i. t = % vs planned pace (+ slower, − faster); c = colour class from the % off planned pace */
+function seg(i){
+var p=P(),a=(S.p[i-1]-(i>1?S.p[i-2]:0))/1000,pl=tg(i)-tg(i-1),km=p[i][1]-p[i-1][1],pc=(a/pl-1)*100,ap=Math.abs(pc);
+var u=(ap<10?ap.toFixed(1):Math.round(ap))+"%",t=(pc<0?"−":"+")+u;
+return{t:t,u:u,c:pc<-EASEP?"ease":(pc>FASTP?"fast":"ok"),ap:a/km,pp:pl/km}
+}
+function B(l,n){return"<span>"+l+"</span>"+(n?'<span class="n">'+n+" s</span>":"")}
+function tick(){
+if(!S.t0)return;
+var e=S.done?S.fin/1000:(Date.now()-S.t0)/1000;
+$("el").textContent=f(e,1);
+if(!S.done){var d=tg(S.p.length+1)-e,t=d>=0?f(d,1):"−"+f(-d,1);$("cd").textContent=t;$("cd").className=(d>=0?"":"late")+(t.length>=6?" sm":"")}
+}
+$("course").addEventListener("change",function(){var o=C[S.c],n=C[this.value];S.c=this.value;if(!!o.d!==!!n.d){S.m=n.d||30;S.s=0;buildInputs()}save();preview()});
+function num(){S.m=Math.min(600,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}
+$("go").addEventListener("click",function(){num();S.t0=Date.now();S.p=[];S.done=false;S.fin=0;save();lock();view()});
+var lastPass=0;
+function passNow(){
+if(S.done)return;
+var now=Date.now();if(now-lastPass<500)return;lastPass=now;
+var e=now-S.t0;S.p.push(e);
+if(S.p.length>=P().length-1){S.done=true;S.fin=e;if(wl){try{wl.release()}catch(x){}}}
+save();view();
+}
+/* Act on touch-down (the button also has touch-action:none), so a tap with a little finger movement is never read as a scroll. The click handler is only for keyboard activation (detail 0). */
+$("pass").addEventListener("pointerdown",function(ev){ev.preventDefault();passNow()});
+$("pass").addEventListener("click",function(ev){if(ev.detail===0)passNow()});
+$("undo").addEventListener("click",function(){
+if(!S.p.length)return;
+S.p.pop();if(S.done){S.done=false;S.fin=0;lock()}save();view();
+});
+var rt=null;
+$("reset").addEventListener("click",function(){
+var b=this;
+if(!rt){b.textContent="Tap again to reset";rt=setTimeout(function(){rt=null;b.textContent="Reset"},3000);return}
+clearTimeout(rt);rt=null;b.textContent="Reset";
+S.t0=null;S.p=[];S.done=false;S.fin=0;save();if(wl){try{wl.release()}catch(x){}}view();
+});
+setInterval(tick,200);
+view();
+if(S.t0&&!S.done)lock();
+</script>
+</body>
+</html>

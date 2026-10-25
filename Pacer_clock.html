@@ -45,10 +45,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <div class="card" style="margin-top:12px">
 <label for="course">Course</label>
 <select id="course"></select>
-<div class="row" style="margin-top:12px">
-<div><label for="min">Target minutes</label><input id="min" type="number" inputmode="numeric" min="10" max="60"></div>
-<div><label for="sec">Seconds</label><input id="sec" type="number" inputmode="numeric" min="0" max="59"></div>
-</div>
+<div class="row" id="tin" style="margin-top:12px"></div>
 </div>
 <div class="card" style="margin-top:12px"><ul class="plan" id="prev"></ul></div>
 <button id="go" style="margin-top:12px">Start clock</button>
@@ -93,8 +90,15 @@ document.addEventListener("visibilitychange",function(){if(S.t0&&!S.done&&docume
 function setup(){
 var sel=$("course");
 if(!sel.options.length){for(var k in C){var o=document.createElement("option");o.value=k;o.textContent=C[k].n;sel.appendChild(o)}}
-sel.value=S.c;$("min").value=S.m;$("sec").value=S.s;preview();
+sel.value=S.c;buildInputs();preview();
 }
+/* The time boxes only exist on the setup screen. Removing them on Start clears iOS's typing-undo history, so a shake while running can no longer pop up "Undo Typing". */
+function buildInputs(){
+$("tin").innerHTML='<div><label for="min">Target minutes</label><input id="min" type="number" inputmode="numeric" min="10" max="60" autocomplete="off"></div><div><label for="sec">Seconds</label><input id="sec" type="number" inputmode="numeric" min="0" max="59" autocomplete="off"></div>';
+$("min").value=S.m;$("sec").value=S.s;
+$("min").addEventListener("input",num);$("sec").addEventListener("input",num);
+}
+function dropInputs(){var a=document.activeElement;if(a&&a.blur)a.blur();$("tin").innerHTML=""}
 function preview(){
 var h="",p=P();
 for(var i=0;i<p.length;i++)h+="<li><span>"+p[i][0]+"</span><span>"+f(tg(i))+"</span></li>";
@@ -104,6 +108,7 @@ function view(){
 var run=!!S.t0;
 $("setup").hidden=run;$("run").hidden=!run;
 if(!run){setup();return}
+dropInputs();
 var p=P(),n=S.p.length,idx=n+1,last=p.length-1;
 $("meta").textContent=C[S.c].n+" · target "+f(ts());
 if(S.done){
@@ -134,7 +139,6 @@ if(!S.done){var d=tg(S.p.length+1)-e;$("cd").textContent=d>=0?"in "+f(d,1):f(-d,
 }
 $("course").addEventListener("change",function(){S.c=this.value;save();preview()});
 function num(){S.m=Math.min(60,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}
-$("min").addEventListener("input",num);$("sec").addEventListener("input",num);
 $("go").addEventListener("click",function(){num();S.t0=Date.now();S.p=[];S.done=false;S.fin=0;save();lock();view()});
 $("pass").addEventListener("click",function(){
 if(S.done)return;

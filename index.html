@@ -81,12 +81,15 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 </div>
 <div class="card" style="margin-top:12px"><ul class="plan" id="prev"></ul></div>
 <div class="row" style="margin-top:12px"><div><button class="sec" id="vs"></button></div><div><button class="sec" id="vt">Test voice</button></div></div>
+<div class="row" style="margin-top:12px"><div><button class="sec" id="gs"></button></div><div><button class="sec" id="gx">Reset positions</button></div></div>
+<p class="sub" id="gst" style="margin:8px 0 0"></p>
 <button id="go" style="margin-top:12px">Start clock</button>
-<p class="sub">Tap Start at the gun. The clock keeps time even if the screen locks. Voice alerts only sound while the screen is on, so keep the phone unlocked.</p>
+<p class="sub">Tap Start at the gun. The clock keeps time even if the screen locks. Voice alerts and GPS only work while the screen is on, so keep the phone unlocked. With GPS on, waypoints are recognised automatically (Passed still works, and each manual tap teaches the app that waypoint's position).</p>
 </section>
 
 <section id="run" hidden style="display:flex;flex-direction:column;gap:12px;flex:1">
 <div class="sub" id="meta"></div>
+<div class="sub" id="gps" style="margin-top:-6px"></div>
 <div id="st"></div>
 <div class="card" style="text-align:center">
 <div class="sub" id="nl" hidden style="font-size:18px;font-weight:700">Finished</div>
@@ -112,7 +115,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <div class="sub" id="s2"></div><div class="sub" id="s3"></div>
 </div>
 <ul class="fin" id="fin" hidden></ul>
-<div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="vr"></button><button class="sec" id="reset">Reset</button></div>
+<div class="btns"><button class="sec" id="undo">Undo</button><button class="sec" id="vr"></button><button class="sec" id="gr"></button><button class="sec" id="reset">Reset</button></div>
 </section>
 </main>
 <script>
@@ -155,7 +158,8 @@ $("prev").innerHTML=h;
 var EASE=10,FAST=5,EASEP=6,FASTP=3; /* EASEP/FASTP: % faster / % slower than planned segment pace before orange / red (about the same as 10 s / 5 s over a typical ~170 s segment) */ /* seconds ahead before "ease off"; seconds behind before "speed up" */
 function view(){
 var run=!!S.t0;
-vLab();
+vLab();gLab();
+if(gOn()&&!(S.t0&&S.done))gstart();else gstop();
 $("setup").hidden=run;$("run").hidden=!run;
 if(!run){setup();return}
 dropInputs();
@@ -273,21 +277,105 @@ if(!spoken[k2]&&e>=te){spoken[k2]=1;if(e-te<=8)say(i===last?"You should be finis
 $("vs").addEventListener("click",function(){S.v=!vOn();save();vLab();if(vOn())unlock()});
 $("vr").addEventListener("click",function(){S.v=!vOn();save();vLab();if(!vOn()&&window.speechSynthesis){try{speechSynthesis.cancel()}catch(x){}}});
 $("vt").addEventListener("click",function(){var p=P();S.v=true;save();vLab();say("Voice alerts on. In 30 seconds, "+p[1][0])});
+var GEO0={sot:{1:[50.927154,-1.415077,1],2:[50.923686,-1.414211,1],3:[50.923467,-1.411309,1],4:[50.925183,-1.409366,1],5:[50.924442,-1.406182,5],6:[50.928903,-1.408811,1],7:[50.933324,-1.410992,1],8:[50.93289,-1.416145,1],13:[50.926546,-1.413432,1],14:[50.926071,-1.413131,1]}};
+/* GPS waypoint detection. Positions come from a seed table (Southampton, from the route GPX, with the true Cowherds corner) plus positions learned from your manual "Passed" taps, averaged over runs and kept on this phone. A waypoint is recognised when your closest approach is within about 20-25 m of it, in order (15 m if one earlier waypoint was missed); the time used is your closest approach. */
+var CAN={sot:{9:1,10:2,11:3,12:4}},GL=gload2(),lastFix=null,gw=null,arm=null,gerr="",gtx="",gx=null;
+function gload2(){try{return JSON.parse(localStorage.getItem("pacerGeo1"))||{}}catch(e){return{}}}
+function gsave(){try{localStorage.setItem("pacerGeo1",JSON.stringify(GL))}catch(e){}}
+function gEn(){return S.g!==false}
+function gOn(){return gEn()&&!!navigator.geolocation}
+function gk(i){var m=CAN[S.c];return(m&&m[i])||i}
+function gpos(i){var k=gk(i),l=GL[S.c]&&GL[S.c][k];if(l)return l;var s=GEO0[S.c]&&GEO0[S.c][k];return s||null}
+function dm(a,b){var kx=111320*Math.cos(a[0]*Math.PI/180);return Math.hypot((a[1]-b[1])*kx,(a[0]-b[0])*110540)}
+function gLab(){var t="GPS waypoints: "+(gEn()?"On":"Off");if($("gs"))$("gs").textContent=t;if($("gr"))$("gr").textContent=gEn()?"GPS on":"GPS off"}
+function gtxt(){
+var t;
+if(!gEn())t="GPS off";else if(!navigator.geolocation)t="GPS not available";
+else if(gerr==="denied")t="GPS blocked: allow Location for this site";
+else if(!lastFix)t="GPS: waiting for signal…";
+else if(Date.now()-lastFix.t>10000)t="GPS: signal lost";
+else t="GPS ±"+Math.round(lastFix.a)+" m"+(lastFix.a>35?" (too rough to use)":"");
+var p=P(),n=0,i;for(i=1;i<p.length;i++){if(gpos(i))n++}
+var rf=Object.keys(GL[S.c]||{}).length,t2=n+" of "+(p.length-1)+" waypoints have a GPS position"+(rf?" ("+rf+" refined by your taps)":"")+(n<p.length-1?". Tap Passed at each waypoint on a run to teach the rest.":"");
+var k=t+"|"+t2;if(k===gtx)return;gtx=k;
+if($("gps"))$("gps").textContent=t;if($("gst"))$("gst").innerHTML=t+"<br>"+t2;
+}
+function gstart(){if(gw!==null||!gOn())return;try{gw=navigator.geolocation.watchPosition(onFix,function(er){gerr=(er&&er.code===1)?"denied":"nofix";gtxt()},{enableHighAccuracy:true,maximumAge:0,timeout:30000})}catch(x){gw=null}}
+function gstop(){if(gw!==null){try{navigator.geolocation.clearWatch(gw)}catch(x){}gw=null}lastFix=null;arm=null;gerr="";gtx="";gtxt()}
+function onFix(pp){var c=pp.coords;lastFix={la:c.latitude,lo:c.longitude,a:c.accuracy,t:pp.timestamp};gerr="";gtxt();detect()}
+/* Learn from a manual tap: average the current GPS fix into the stored position (ignored if the fix is old, rough, or >60 m from a known position) */
+function learn(i){
+if(!gEn()||!lastFix||Date.now()-lastFix.t>3000||lastFix.a>30)return;
+var o=gpos(i),f=[lastFix.la,lastFix.lo],k=gk(i);
+GL[S.c]=GL[S.c]||{};
+if(!o)GL[S.c][k]=[f[0],f[1],1];
+else{if(dm(o,f)>60)return;var n=Math.min(o[2]||1,10);GL[S.c][k]=[(o[0]*n+f[0])/(n+1),(o[1]*n+f[1])/(n+1),Math.min(n+1,10)]}
+gsave();gtx="";gtxt();
+}
+function detect(){
+if(!S.t0||S.done||!gEn()||!lastFix||lastFix.a>35)return;
+var f=lastFix,pos=[f.la,f.lo],n=S.p.length,last=P().length-1,i0=n+1,e=f.t-S.t0,o,d,i,k;
+if(e<0)return;
+if(arm&&arm.i<=n)arm=null;
+if(arm){
+o=gpos(arm.i);d=o?dm(o,pos):1e9;
+if(d<arm.d){arm.d=d;arm.t=f.t}
+if(d>arm.d+6||f.t-arm.first>20000){var a=arm;arm=null;if(a.d<=a.A)fire(a.i,a.t-S.t0)}
+return;
+}
+for(k=0;k<2;k++){
+i=i0+k;if(i>last)break;
+o=gpos(i);if(!o)continue;
+if(e<tg(i)*500-10000)continue;
+d=dm(o,pos);
+var A=k?15:((o[2]||1)>=3?20:25);
+if(d<=A+10){arm={i:i,d:d,t:f.t,first:f.t,A:A};return}
+}
+}
+function fire(i,eMs){
+var n=S.p.length,prev=n?S.p[n-1]:0,p=P();
+if(eMs<prev+3000||i<=n)return;
+if(i>n+1){var j=n+1,fr=(p[j][1]-p[n][1])/(p[i][1]-p[n][1]);S.p.push(prev+(eMs-prev)*fr)}
+passNow(true,eMs);
+report(i,eMs);
+}
+function sayT(s){s=Math.round(s);var m=Math.floor(s/60),r=s%60;return m+" minute"+(m===1?"":"s")+" "+r+" second"+(r===1?"":"s")}
+function report(i,eMs){
+if(!vOn())return;
+var p=P(),d=Math.round(tg(i)-eMs/1000),ad=Math.abs(d);
+if(i===p.length-1){say("Finished. Time "+sayT(eMs/1000)+", "+(ad<=2?"on target":ad+" seconds "+(d>0?"early":"late")));return}
+var st=ad<=2?"on plan":ad+" seconds "+(d>0?"ahead":"behind"),adv="";
+if(-d<-EASE)adv=". Ease off";else if(-d>FAST)adv=". Speed up";
+say(p[i][0]+", "+st+adv);
+}
+$("gs").addEventListener("click",gToggle);
+$("gr").addEventListener("click",gToggle);
+function gToggle(){S.g=!gEn();save();gLab();view()}
+$("gx").addEventListener("click",function(){
+var b=this;
+if(!gx){b.textContent="Tap again to confirm";gx=setTimeout(function(){gx=null;b.textContent="Reset positions"},3000);return}
+clearTimeout(gx);gx=null;b.textContent="Reset positions";
+delete GL[S.c];gsave();gtx="";gtxt();
+});
 function tick(){
 if(!S.t0)return;
 var e=S.done?S.fin/1000:(Date.now()-S.t0)/1000;
 $("el").textContent=f(e,1);
 if(!S.done)alerts(e);
+gtxt();
 if(!S.done){var d=tg(S.p.length+1)-e,t=d>=0?f(d,1):"−"+f(-d,1);$("cd").textContent=t;$("cd").className=(d>=0?"":"late")+(t.length>=6?" sm":"")}
 }
 $("course").addEventListener("change",function(){var o=C[S.c],n=C[this.value];S.c=this.value;if(!!o.d!==!!n.d){S.m=n.d||30;S.s=0;buildInputs()}save();preview()});
 function num(){S.m=Math.min(600,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}
-$("go").addEventListener("click",function(){num();unlock();S.t0=Date.now();S.p=[];S.done=false;S.fin=0;save();lock();view()});
+$("go").addEventListener("click",function(){num();unlock();S.t0=Date.now();S.p=[];S.done=false;S.fin=0;arm=null;save();lock();view()});
 var lastPass=0;
-function passNow(){
+function passNow(auto,eMs){
 if(S.done)return;
-var now=Date.now();if(now-lastPass<500)return;lastPass=now;
-var e=now-S.t0;S.p.push(e);
+var now=Date.now();
+if(!auto){if(now-lastPass<500)return;lastPass=now}
+var e=auto?eMs:now-S.t0;
+if(!auto)learn(S.p.length+1);
+S.p.push(e);
 if(S.p.length>=P().length-1){S.done=true;S.fin=e;if(wl){try{wl.release()}catch(x){}}}
 save();view();
 }
@@ -303,7 +391,7 @@ $("reset").addEventListener("click",function(){
 var b=this;
 if(!rt){b.textContent="Tap again to reset";rt=setTimeout(function(){rt=null;b.textContent="Reset"},3000);return}
 clearTimeout(rt);rt=null;b.textContent="Reset";
-S.t0=null;S.p=[];S.done=false;S.fin=0;save();if(wl){try{wl.release()}catch(x){}}view();
+S.t0=null;S.p=[];S.done=false;S.fin=0;arm=null;save();if(wl){try{wl.release()}catch(x){}}view();
 });
 setInterval(tick,200);
 view();

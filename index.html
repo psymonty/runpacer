@@ -307,6 +307,12 @@ function gOn(){return gEn()&&!!navigator.geolocation}
 function gk(i){var m=CAN[S.c];return(m&&m[i])||i}
 function gpos(i){var k=gk(i),l=GL[S.c]&&GL[S.c][k];if(l)return l;var s=GEO0[S.c]&&GEO0[S.c][k];return s||null}
 function dm(a,b){var kx=111320*Math.cos(a[0]*Math.PI/180);return Math.hypot((a[1]-b[1])*kx,(a[0]-b[0])*110540)}
+/* Safeguards so desk tests can't pollute the learned positions: GF gives each mapped course a centre and radius (m); GPS fixes outside it are ignored for learning, waypoint detection and the finish cue, and learned positions already outside it are purged on load. Learning also needs real movement (>=40 m over the last 40 s). Courses without a GF entry only get the movement check. */
+var GF={and:[51.2204,-1.5078,900],sot:[50.9284,-1.4112,1000]},trail=[];
+function inFence(p){var g=GF[S.c];return !g||dm([g[0],g[1]],p)<=g[2]}
+function moving(){if(!lastFix||!trail.length)return false;var now=lastFix.t,cur=[lastFix.la,lastFix.lo],old=trail[0],mx=0,i;if(now-old[0]<15000)return false;for(i=0;i<trail.length;i++)mx=Math.max(mx,dm([trail[i][1],trail[i][2]],cur));return mx>=40}
+function purge(){var c,k,g,l,ch=0;for(c in GF){g=GF[c];l=GL[c];if(!l)continue;for(k in l)if(dm([g[0],g[1]],l[k])>g[2]){delete l[k];ch=1}if(!Object.keys(l).length)delete GL[c]}if(ch)gsave()}
+purge();
 function gLab(){var t="GPS waypoints: "+(gEn()?"On":"Off");if($("gs"))$("gs").textContent=t;if($("gr"))$("gr").textContent=gEn()?"GPS on":"GPS off"}
 function gtxt(){
 var t;
@@ -314,18 +320,19 @@ if(!gEn())t="GPS off";else if(!navigator.geolocation)t="GPS not available";
 else if(gerr==="denied")t="GPS blocked: allow Location for this site";
 else if(!lastFix)t="GPS: waiting for signal…";
 else if(Date.now()-lastFix.t>10000)t="GPS: signal lost";
-else t="GPS ±"+Math.round(lastFix.a)+" m"+(lastFix.a>35?" (too rough to use)":"");
+else t="GPS ±"+Math.round(lastFix.a)+" m"+(lastFix.a>35?" (too rough to use)":"")+(!inFence([lastFix.la,lastFix.lo])?" · not at this course: positions not learned":"");
 var p=P(),n=0,i;for(i=1;i<p.length;i++){if(gpos(i))n++}
 var rf=Object.keys(GL[S.c]||{}).length,t2=n+" of "+(p.length-1)+" waypoints have a GPS position"+(rf?" ("+rf+" refined by your taps)":"")+(n<p.length-1?". Tap Passed at each waypoint on a run to teach the rest.":"");
 var k=t+"|"+t2;if(k===gtx)return;gtx=k;
 if($("gps"))$("gps").textContent=t;if($("gst"))$("gst").innerHTML=t+"<br>"+t2;
 }
 function gstart(){if(gw!==null||!gOn())return;try{gw=navigator.geolocation.watchPosition(onFix,function(er){gerr=(er&&er.code===1)?"denied":"nofix";gtxt()},{enableHighAccuracy:true,maximumAge:0,timeout:30000})}catch(x){gw=null}}
-function gstop(){if(gw!==null){try{navigator.geolocation.clearWatch(gw)}catch(x){}gw=null}lastFix=null;arm=null;gerr="";gtx="";gtxt()}
-function onFix(pp){var c=pp.coords;lastFix={la:c.latitude,lo:c.longitude,a:c.accuracy,t:pp.timestamp};gerr="";gtxt();detect()}
+function gstop(){if(gw!==null){try{navigator.geolocation.clearWatch(gw)}catch(x){}gw=null}lastFix=null;arm=null;gerr="";gtx="";trail=[];gtxt()}
+function onFix(pp){var c=pp.coords;lastFix={la:c.latitude,lo:c.longitude,a:c.accuracy,t:pp.timestamp};trail.push([lastFix.t,lastFix.la,lastFix.lo]);while(trail.length&&lastFix.t-trail[0][0]>40000)trail.shift();gerr="";gtxt();detect()}
 /* Learn from a manual tap: average the current GPS fix into the stored position (ignored if the fix is old, rough, or >60 m from a known position) */
 function learn(i){
 if(!gEn()||!lastFix||Date.now()-lastFix.t>3000||lastFix.a>30)return;
+if(!inFence([lastFix.la,lastFix.lo])||!moving())return;
 var o=gpos(i),f=[lastFix.la,lastFix.lo],k=gk(i);
 GL[S.c]=GL[S.c]||{};
 if(!o)GL[S.c][k]=[f[0],f[1],1];
@@ -335,7 +342,7 @@ gsave();gtx="";gtxt();
 function detect(){
 if(!S.t0||S.done||!gEn()||!lastFix||lastFix.a>35)return;
 var f=lastFix,pos=[f.la,f.lo],n=S.p.length,last=P().length-1,i0=n+1,e=f.t-S.t0,o,d,i,k;
-if(e<0)return;
+if(e<0||!inFence(pos))return;
 if(n>=last-(C[S.c].fo||2)){var fo=gpos(last);if(fo&&dm(fo,pos)<=150)finCue()}
 if(arm&&arm.i<=n)arm=null;
 if(arm){

@@ -77,6 +77,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <div class="card" style="margin-top:12px">
 <label for="course">Course</label>
 <select id="course"></select>
+<div id="srow" hidden style="margin-top:12px"><label for="season">Ground</label><select id="season"><option value="s">Summer · firm grass</option><option value="w">Winter · soft, muddy grass</option></select></div>
 <div class="row" id="tin" style="margin-top:12px"></div>
 </div>
 <div class="card" style="margin-top:12px"><ul class="plan" id="prev"></ul></div>
@@ -84,7 +85,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 <div class="row" style="margin-top:12px"><div><button class="sec" id="gs"></button></div><div><button class="sec" id="gx">Reset positions</button></div></div>
 <p class="sub" id="gst" style="margin:8px 0 0"></p>
 <button id="go" style="margin-top:12px">Start clock</button>
-<p class="sub">Tap Start at the gun. The clock keeps time even if the screen locks. Voice alerts and GPS only work while the screen is on, so keep the phone unlocked. With GPS on, waypoints are recognised automatically (Passed still works, and each manual tap teaches the app that waypoint's position).</p>
+<p class="sub">Tap Start at the gun. The clock keeps time even if the screen locks. Voice alerts and GPS only work while the screen is on, so keep the phone unlocked. With GPS on, waypoints are recognised automatically, except the finish: tap Finished as you cross the line (Passed still works, and each manual tap teaches the app that waypoint's position).</p>
 </section>
 
 <section id="run" hidden style="display:flex;flex-direction:column;gap:12px;flex:1">
@@ -122,15 +123,30 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 "use strict";
 var C={
 sot:{n:"Southampton parkrun",p:[["Start",0,0],["Left turn near park exit",.457,.0954],["Start of Cemetery Lake",.857,.1715],["Left turn after lake",1.064,.2123],["Start junction",1.302,.2599],["Cowherds Inn car park",1.622,.327],["Cross-paths after boating lake",2.163,.4416],["Left turn at top of hill",2.677,.5515],["Point-out cross-paths",3.066,.6266],["Ornamental Lake",3.5,.7083],["Park exit",3.769,.759],["Start of lake",4.169,.835],["Left turn after Cemetery Lake",4.376,.8758],["Start junction",4.609,.9223],["Left turn to finish",4.931,.9884],["Finish",5,1]]},
+and:{n:"Andover parkrun",sf:1,fo:1,p:[]},
 eas:{n:"Eastleigh parkrun",p:[["Start",0,0],["Lap 1 NE corner (left)",.326,.0652],["Lap 1 SW corner (left)",.83,.166],["Lap 1 N hairpin (right)",1.217,.2434],["Lap 1 finish junction",1.581,.3162],["Lap 1 done – start line",1.709,.3418],["Lap 2 NE corner (left)",2.036,.4072],["Lap 2 SW corner (left)",2.54,.508],["Lap 2 N hairpin (right)",2.926,.5852],["Lap 2 finish junction",3.291,.6582],["Lap 2 done – start line",3.419,.6838],["Lap 3 NE corner (left)",3.745,.749],["Lap 3 SW corner (left)",4.249,.8498],["Lap 3 N hairpin (right)",4.635,.927],["Finish",5,1]]},
 wm:{n:"Water Meadows 5k",p:[["Start – St Cross corner of wall",0,0],["Garnier Road crossing",0.564,0.113],["New Hall",1.252,0.2512],["Wharf Hill",1.524,0.3072],["Boat club right turn",1.667,0.3359],["St Cats CP",2.38,0.4778],["Old railway bridge",3.572,0.715],["Viaduct junction",3.777,0.7554],["Right turn to head North",4.333,0.8657],["Finish",5,1]]},
 win:{n:"Winchester 5k road loop",p:[["Start – Honeysuckle Close",0,0],["Left on Christchurch Rd",0.705,0.1307],["Left on Ranelagh Rd",1.219,0.2345],["Left on Cromwell Rd",1.41,0.2719],["Left bend on Cromwell Rd",1.893,0.3727],["Right onto Stanmore Lane",2.115,0.4168],["Left Wavell Way",2.326,0.4676],["Left on Minden Way",2.971,0.6058],["Silverwood Close",3.605,0.7261],["Hazel Grove then right turn",3.847,0.77],["Ridgeway junction – straight on",4.202,0.8509],["Left on Plough Way",4.482,0.9063],["Bottom of Plough Way",4.683,0.9411],["End of Plough Way",4.804,0.9635],["Finish",5,1]]},
 cla:{n:"Clarendon Marathon",d:270,e:25,f:12,p:[["Start – Laverstock",0.0,0.0],["Mile 26 · Laverstock",0.5,0.0108,"Road · flat"],["Mile 25 · nr Milford",2.109,0.0475,"Road → Gravel · flat"],["Mile 24 · King Manor Hill",3.718,0.0875,"Gravel → Road → Soft · climb +46 m"],["Mile 23 · past King Manor Hill",5.328,0.1271,"Gravel → Soft · climb +30 m"],["Mile 22 · approaching Pitton",6.937,0.1631,"Soft · descent −56 m"],["Mile 21 · past Pitton",8.546,0.2034,"Soft → Road · climb +48 m"],["Mile 20 · nr Middle Winterslow",10.156,0.242,"Soft · flat"],["Mile 19 · nr East Winterslow",11.765,0.2801,"Soft → Gravel · rolling"],["Mile 18 · leaving Winterslow",13.374,0.3164,"Gravel → Road · descent −12 m"],["Mile 17 · downs E of Winterslow",14.984,0.3534,"Soft → Road → Gravel · descent −13 m"],["Mile 16 · open downland",16.593,0.3899,"Soft → Road · descent −24 m"],["Mile 15 · S of Whiteshoot Hill",18.202,0.4278,"Road → Soft · rolling"],["Mile 14 · approaching Broughton",19.812,0.4675,"Soft · rolling"],["Mile 13 · Broughton (half start)",21.421,0.5017,"Soft → Road · descent −44 m"],["Mile 12 · Broughton to Houghton",23.03,0.5397,"Soft → Gravel · flat"],["Mile 11 · nr Houghton",24.64,0.5753,"Gravel · descent −13 m"],["Mile 10 · Yew Hill",26.249,0.6137,"Gravel · climb +30 m"],["Mile 9 · King's Somborne",27.858,0.6485,"Road · descent −22 m"],["Mile 8 · nr Ashley",29.468,0.6905,"Soft · climb +47 m"],["Mile 7 · Ashley Down",31.077,0.7298,"Soft · rolling"],["Mile 6 · Beacon Hill",32.686,0.7736,"Soft · climb +72 m"],["Mile 5 · Farley Mount (mini start)",34.296,0.8096,"Soft · descent −46 m"],["Mile 4 · nr Pitt Down",35.905,0.8476,"Soft → Gravel · climb +11 m"],["Mile 3 · nr Stockers Down",37.514,0.8864,"Soft · climb +11 m"],["Mile 2 · Stockers Down",39.124,0.923,"Soft · descent −27 m"],["Mile 1 · Rabbit Warren",40.733,0.9638,"Soft · climb +37 m"],["Finish – Winchester",42.342,1.0,"Soft → Road · flat"]]}
 };
 var KEY="pacerClock1",S=load()||{c:"wm",m:30,s:0,t0:null,p:[],done:false,fin:0},wl=null;
+/* Andover parkrun: 2 laps of the same 9 waypoints (10-18 repeat 1-9), distances along the KML/Mapy route scaled to 5.000 km. Time share per waypoint = surface-weighted distance, so grass counts for more than tarmac, and more again in winter. Edit the factors here (g grass, v gravel, t tarmac). */
+var ANN=["Footbridge","Line of trees","Pump Track · NW corner","Athletics Club Car Park","Right turn before Outdoor Gym","Passing path between lakes","Lakeside Carpark","Left turn round lake","End of lakes"],
+ANK=[.15,.542,.696,.967,1.108,1.373,1.553,1.731,1.904,2.494,2.886,3.039,3.311,3.451,3.716,3.897,4.075,4.248,4.837],
+ANS=[[0,"g"],[1.108,"t"],[1.904,"v"],[2.005,"g"],[3.451,"t"],[4.248,"v"],[4.349,"g"]],
+ANT=["Grass","Grass","Grass","Grass","Grass","Tarmac","Tarmac","Tarmac","Tarmac","Gravel → Grass","Grass","Grass","Grass","Grass","Tarmac","Tarmac","Tarmac","Tarmac","Gravel → Grass","Grass"];
+function andP(win){
+var F=win?{g:1.08,v:1.03,t:1}:{g:1.03,v:1.02,t:1},b=ANS;
+function A(x){var t=0,i,a,e;for(i=0;i<b.length;i++){a=b[i][0];e=i+1<b.length?b[i+1][0]:5;if(x>a)t+=(Math.min(x,e)-a)*F[b[i][1]]}return t}
+var T=A(5),p=[["Start",0,0]],i,nm;
+for(i=0;i<19;i++){nm=i===18?"Footbridge (final)":(i<9?ANN[i]:ANN[i-9]+" (lap 2)");p.push([nm,ANK[i],Math.round(A(ANK[i])/T*10000)/10000,ANT[i]])}
+p.push(["Finish",5,1,ANT[19]]);
+return p}
+function applySeason(){C.and.p=andP(S.sn==="w")}
 function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function $(i){return document.getElementById(i)}
+applySeason();
 function f(s,fl){s=fl?Math.floor(s):Math.round(s);if(s<0)s=0;var h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return(h?h+":"+(m<10?"0":"")+m:m)+":"+(r<10?"0":"")+r}
 function ts(){return S.m*60+S.s}
 function P(){return C[S.c].p}
@@ -151,6 +167,7 @@ $("min").addEventListener("input",num);$("sec").addEventListener("input",num);
 }
 function dropInputs(){var a=document.activeElement;if(a&&a.blur)a.blur();$("tin").innerHTML=""}
 function preview(){
+$("srow").hidden=!C[S.c].sf;$("season").value=S.sn==="w"?"w":"s";
 var h="",p=P();
 for(var i=0;i<p.length;i++)h+="<li><span>"+p[i][0]+"</span><span>"+f(tg(i))+"</span></li>";
 $("prev").innerHTML=h;
@@ -165,7 +182,7 @@ if(!run){setup();return}
 dropInputs();
 EASE=C[S.c].e||10;FAST=C[S.c].f||5;
 var p=P(),n=S.p.length,idx=n+1,last=p.length-1;
-$("meta").textContent=C[S.c].n+" · target "+f(ts());
+$("meta").textContent=C[S.c].n+" · target "+f(ts())+(C[S.c].sf?" · "+(S.sn==="w"?"winter":"summer"):"");
 var st=$("st");
 /* last-waypoint stats (n = index of last waypoint passed, 0 = start) */
 var kmDone=p[n][1],tDone=n?S.p[n-1]/1000:0;
@@ -189,7 +206,7 @@ if(km>0){var pp=(tg(idx)-tg(n))/km,L=Math.min(Math.max(km,p[last][1]*.1),p[last]
 tp=Math.max(pp*.9,Math.min(pp*1.1,tp));var pcs=f(tp);$("pc").innerHTML=pcs+" <small>/km</small>";$("pc").className=pcs.length>=5?"sm":""}
 else{$("pc").className="";$("pc").innerHTML=""}
 $("dist").textContent="for "+Math.round(km*1000)+" m";$("ter").textContent=p[idx][3]||"";
-$("pass").hidden=false;$("pass").textContent=idx===last?"Finish":"Passed";
+$("pass").hidden=false;$("pass").textContent=idx===last?"Finished":"Passed";
 if(!n){st.className="";st.innerHTML=B("HOLD PLAN PACE")}
 else{
 var dl=Math.round(tDone-tg(n)),ab=Math.abs(dl);
@@ -277,9 +294,9 @@ if(!spoken[k2]&&e>=te){spoken[k2]=1;if(e-te<=8)say(i===last?"You should be finis
 $("vs").addEventListener("click",function(){S.v=!vOn();save();vLab();if(vOn())unlock()});
 $("vr").addEventListener("click",function(){S.v=!vOn();save();vLab();if(!vOn()&&window.speechSynthesis){try{speechSynthesis.cancel()}catch(x){}}});
 $("vt").addEventListener("click",function(){var p=P();S.v=true;save();vLab();say("Voice alerts on. In 30 seconds, "+p[1][0])});
-var GEO0={sot:{1:[50.927154,-1.415077,1],2:[50.923686,-1.414211,1],3:[50.923467,-1.411309,1],4:[50.925183,-1.409366,1],5:[50.924442,-1.406182,5],6:[50.928903,-1.408811,1],7:[50.933324,-1.410992,1],8:[50.93289,-1.416145,1],9:[50.929484,-1.414378,1],14:[50.926546,-1.413432,1],15:[50.926071,-1.413131,1]}};
+var GEO0={and:{1:[51.2221772,-1.50687,1],20:[51.221449,-1.505764,1]},sot:{1:[50.927154,-1.415077,1],2:[50.923686,-1.414211,1],3:[50.923467,-1.411309,1],4:[50.925183,-1.409366,1],5:[50.924442,-1.406182,5],6:[50.928903,-1.408811,1],7:[50.933324,-1.410992,1],8:[50.93289,-1.416145,1],9:[50.929484,-1.414378,1],14:[50.926546,-1.413432,1],15:[50.926071,-1.413131,1]}};
 /* GPS waypoint detection. Positions come from a seed table (Southampton, from the route GPX, with the true Cowherds corner) plus positions learned from your manual "Passed" taps, averaged over runs and kept on this phone. A waypoint is recognised when your closest approach is within about 20-25 m of it, in order (15 m if one earlier waypoint was missed); the time used is your closest approach. */
-var CAN={sot:{10:1,11:2,12:3,13:4}},GL=gload2(),lastFix=null,gw=null,arm=null,gerr="",gtx="",gx=null;
+var CAN={sot:{10:1,11:2,12:3,13:4},and:{10:1,11:2,12:3,13:4,14:5,15:6,16:7,17:8,18:9,19:1}},GL=gload2(),lastFix=null,gw=null,arm=null,gerr="",gtx="",gx=null;
 function gload2(){var g;try{g=JSON.parse(localStorage.getItem("pacerGeo1"))||{}}catch(e){g={}}
 /* one-off: Southampton gained waypoint 9 (Ornamental Lake), so learned positions for Left turn to finish / Finish move up one place */
 try{if(!localStorage.getItem("pacerGeoM2")){var s=g.sot;if(s){var a=s[13],b=s[14];delete s[13];delete s[14];if(a)s[14]=a;if(b)s[15]=b;localStorage.setItem("pacerGeo1",JSON.stringify(g))}localStorage.setItem("pacerGeoM2","1")}}catch(e){}
@@ -319,6 +336,7 @@ function detect(){
 if(!S.t0||S.done||!gEn()||!lastFix||lastFix.a>35)return;
 var f=lastFix,pos=[f.la,f.lo],n=S.p.length,last=P().length-1,i0=n+1,e=f.t-S.t0,o,d,i,k;
 if(e<0)return;
+if(n>=last-(C[S.c].fo||2)){var fo=gpos(last);if(fo&&dm(fo,pos)<=150)finCue()}
 if(arm&&arm.i<=n)arm=null;
 if(arm){
 o=gpos(arm.i);d=o?dm(o,pos):1e9;
@@ -327,7 +345,7 @@ if(d>arm.d+6||f.t-arm.first>20000){var a=arm;arm=null;if(a.d<=a.A)fire(a.i,a.t-S
 return;
 }
 for(k=0;k<2;k++){
-i=i0+k;if(i>last)break;
+i=i0+k;if(i>=last)break;
 o=gpos(i);if(!o)continue;
 if(e<tg(i)*500-10000)continue;
 d=dm(o,pos);
@@ -337,11 +355,13 @@ if(d<=A+10){arm={i:i,d:d,t:f.t,first:f.t,A:A};return}
 }
 function fire(i,eMs){
 var n=S.p.length,prev=n?S.p[n-1]:0,p=P();
-if(eMs<prev+3000||i<=n)return;
+if(eMs<prev+3000||i<=n||i>=P().length-1)return;
 if(i>n+1){var j=n+1,fr=(p[j][1]-p[n][1])/(p[i][1]-p[n][1]);S.p.push(prev+(eMs-prev)*fr)}
 passNow(true,eMs);
 report(i,eMs);
 }
+var finCued=0;
+function finCue(){if(finCued===S.t0)return;finCued=S.t0;if(vOn())say("Finish line close by. Tap Finished as you cross the line.")}
 function sayT(s){s=Math.round(s);var m=Math.floor(s/60),r=s%60;return m+" minute"+(m===1?"":"s")+" "+r+" second"+(r===1?"":"s")}
 function report(i,eMs){
 if(!vOn())return;
@@ -349,6 +369,7 @@ var p=P(),d=Math.round(tg(i)-eMs/1000),ad=Math.abs(d);
 if(i===p.length-1){say("Finished. Time "+sayT(eMs/1000)+", "+(ad<=2?"on target":ad+" seconds "+(d>0?"early":"late")));return}
 var st=ad<=2?"on plan":ad+" seconds "+(d>0?"ahead":"behind"),adv="";
 if(-d<-EASE)adv=". Ease off";else if(-d>FAST)adv=". Speed up";
+if(i===p.length-2&&finCued!==S.t0){finCued=S.t0;adv+=". Finish line close by. Tap Finished as you cross the line"}
 say(p[i][0]+", "+st+adv);
 }
 $("gs").addEventListener("click",gToggle);
@@ -370,6 +391,7 @@ if(!S.done){var d=tg(S.p.length+1)-e,t=d>=0?f(d,1):"−"+f(-d,1);$("cd").textCon
 }
 $("course").addEventListener("change",function(){var o=C[S.c],n=C[this.value];S.c=this.value;if(!!o.d!==!!n.d){S.m=n.d||30;S.s=0;buildInputs()}save();preview()});
 function num(){S.m=Math.min(600,Math.max(10,parseInt($("min").value,10)||30));S.s=Math.min(59,Math.max(0,parseInt($("sec").value,10)||0));save();preview()}
+$("season").addEventListener("change",function(){S.sn=this.value==="w"?"w":"s";applySeason();save();preview()});
 $("go").addEventListener("click",function(){num();unlock();S.t0=Date.now();S.p=[];S.done=false;S.fin=0;arm=null;save();lock();view()});
 var lastPass=0;
 function passNow(auto,eMs){
@@ -381,6 +403,7 @@ if(!auto)learn(S.p.length+1);
 S.p.push(e);
 if(S.p.length>=P().length-1){S.done=true;S.fin=e;if(wl){try{wl.release()}catch(x){}}}
 save();view();
+if(!auto){if(S.done)report(P().length-1,e);else if(S.p.length===P().length-2)finCue()}
 }
 /* Act on touch-down (the button also has touch-action:none), so a tap with a little finger movement is never read as a scroll. The click handler is only for keyboard activation (detail 0). */
 $("pass").addEventListener("pointerdown",function(ev){ev.preventDefault();passNow()});
